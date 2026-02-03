@@ -421,15 +421,20 @@ show_completion() {
     echo ""
     log_info "正在完成部署..."
     
-    # 强制接管：删除旧的（如果有），然后启动
-    # 无论 onboard 是否启动了服务，我们都强制使用 PM2 接管
-    sudo -u "$OPENCLAW_USER" pm2 delete openclaw >/dev/null 2>&1 || true
+    # 强制接管：清理旧进程
+    log_info "清理旧进程..."
+    # 彻底杀掉该用户的所有 PM2 进程，防止僵尸守护进程导致的 EACCES
+    pkill -u "$OPENCLAW_USER" -f pm2 >/dev/null 2>&1 || true
+    sudo -u "$OPENCLAW_USER" pm2 kill >/dev/null 2>&1 || true
     
     # [关键修复] 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
     log_info "正在修正文件权限..."
     chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "/home/$OPENCLAW_USER"
 
     log_info "启动 OpenClaw 服务..."
+    # 确保 node 权限正常 (防止 extreme case)
+    if [ -f /usr/bin/node ]; then chmod 755 /usr/bin/node; fi
+    
     sudo -u "$OPENCLAW_USER" pm2 start "$WORKSPACE_DIR/start.sh" --name openclaw
     sudo -u "$OPENCLAW_USER" pm2 save
     

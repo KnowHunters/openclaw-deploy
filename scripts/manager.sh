@@ -148,7 +148,7 @@ EOF
 # --- 模块 A: 技能与初始化 ---
 init_knowledge_base() {
     echo -e "\n${CYAN}→ 正在初始化知识库结构...${NC}"
-    local base_dir="/home/$OPENCLAW_USER/.openclaw/workspaces/main"
+    local base_dir="$WORKSPACE_DIR"
     
     run_as_user_shell "mkdir -p '$base_dir/memory'/{tasks,notes,ideas,journal,people}"
     run_as_user_shell "mkdir -p '$base_dir/backups'"
@@ -156,7 +156,7 @@ init_knowledge_base() {
     # 生成索引
     run_as_user_shell "echo '# Memory Index' > '$base_dir/memory/MEMORY.md'"
     
-    echo -e "${GREEN}✓ 目录结构已就绪${NC}"
+    echo -e "${GREEN}✓ 目录结构已就绪 ($base_dir)${NC}"
     pause
 }
 
@@ -254,7 +254,7 @@ configure_llm_wizard() {
 
 # --- 模块 C: 人格与模板 ---
 ensure_template_files() {
-    local base_dir="/home/$OPENCLAW_USER/.openclaw/workspaces/main"
+    local base_dir="$WORKSPACE_DIR"
     run_as_user_shell "mkdir -p '$base_dir'"
     
     if [ ! -f "$base_dir/SOUL.md" ]; then
@@ -273,7 +273,7 @@ ensure_template_files() {
 
 menu_persona() {
     ensure_template_files
-    local base_dir="/home/$OPENCLAW_USER/.openclaw/workspaces/main"
+    local base_dir="$WORKSPACE_DIR"
     while true; do
         header
         echo -e "${BOLD}🎭 人格管理 (Persona Manager)${NC}"

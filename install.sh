@@ -32,6 +32,7 @@ GATEWAY_PORT=${GATEWAY_PORT:-$DEFAULT_PORT}
 # 模式标记
 NON_INTERACTIVE=false
 UPDATE_MODE=false
+START_TIME=$(date +%s)
 
 # ════════════════════ 颜色定义 ════════════════════
 RED='\033[0;31m'
@@ -80,6 +81,7 @@ spinner() {
 run_step() {
     local msg="$1"
     local cmd="$2"
+    local step_start=$(date +%s)
     
     echo -ne "${BLUE}[*]${NC} $msg..."
     
@@ -88,11 +90,23 @@ run_step() {
     spinner $pid
     wait $pid
     local exit_code=$?
+    local step_end=$(date +%s)
+    local duration=$((step_end - step_start))
+    
+    # 格式化时间显示
+    local time_str=""
+    if [ $duration -ge 60 ]; then
+        local min=$((duration / 60))
+        local sec=$((duration % 60))
+        time_str="${GRAY}(${min}m ${sec}s)${NC}"
+    else
+        time_str="${GRAY}(${duration}s)${NC}"
+    fi
     
     if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}[✓]${NC}"
+        echo -e "${GREEN}[✓]${NC} $time_str"
     else
-        echo -e "${RED}[✗]${NC}"
+        echo -e "${RED}[✗]${NC} $time_str"
         echo -e "${RED}错误详情:${NC}"
         tail -n 15 /tmp/openclaw_install.log
         exit 1
@@ -426,10 +440,17 @@ show_completion() {
     echo -e "${GREEN}║                                                               ║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
+    # 计算总耗时
+    local END_TIME=$(date +%s)
+    local TOTAL_DURATION=$((END_TIME - START_TIME))
+    local TOTAL_MIN=$((TOTAL_DURATION / 60))
+    local TOTAL_SEC=$((TOTAL_DURATION % 60))
+
     echo -e "${BOLD}📋 部署信息${NC}"
     echo -e "   ├─ 工作目录  : $WORKSPACE_DIR"
     echo -e "   ├─ 运行用户  : $OPENCLAW_USER"
-    echo -e "   └─ 网关地址  : http://$GATEWAY_BIND:$GATEWAY_PORT"
+    echo -e "   ├─ 网关地址  : http://$GATEWAY_BIND:$GATEWAY_PORT"
+    echo -e "   └─ 总耗时    : ${TOTAL_MIN}分 ${TOTAL_SEC}秒"
     echo ""
     
     # 倒计时运行 onboard

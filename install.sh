@@ -70,11 +70,11 @@ spinner() {
     local chars='|/-\'
     local i=0
     while kill -0 $pid 2>/dev/null; do
-        printf "\r  ${CYAN}[${chars:$i:1}]${NC} "
+        printf "\r${CYAN}[${chars:$i:1}]${NC} "
         i=$(( (i+1) % 4 ))
         sleep $delay
     done
-    printf "\r      \r"
+    printf "\r    \r"
 }
 
 run_step() {
@@ -90,9 +90,9 @@ run_step() {
     local exit_code=$?
     
     if [ $exit_code -eq 0 ]; then
-        echo -e " ${GREEN}✓${NC}"
+        echo -e "${GREEN}[✓]${NC}"
     else
-        echo -e " ${RED}✗${NC}"
+        echo -e "${RED}[✗]${NC}"
         echo -e "${RED}错误详情:${NC}"
         tail -n 15 /tmp/openclaw_install.log
         exit 1
@@ -283,12 +283,18 @@ prepare_workspace() {
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
     # 创建用户
-    id "$OPENCLAW_USER" &>/dev/null || useradd -m -s /bin/bash "$OPENCLAW_USER"
+    if id "$OPENCLAW_USER" &>/dev/null; then
+        log_info "用户 $OPENCLAW_USER 已存在"
+    else
+        run_step "创建运行用户 ($OPENCLAW_USER)" "useradd -m -s /bin/bash $OPENCLAW_USER"
+    fi
     
-    mkdir -p "$WORKSPACE_DIR"
-    mkdir -p "$SCRIPTS_DIR"
-    mkdir -p "/home/$OPENCLAW_USER/.openclaw"
-    chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "/home/$OPENCLAW_USER"
+    run_step "初始化目录结构" "
+        mkdir -p $WORKSPACE_DIR
+        mkdir -p $SCRIPTS_DIR
+        mkdir -p /home/$OPENCLAW_USER/.openclaw
+        chown -R $OPENCLAW_USER:$OPENCLAW_USER /home/$OPENCLAW_USER
+    "
     
     # 可选备份
     if [ -f "$WORKSPACE_DIR/package.json" ] && [ "$UPDATE_MODE" = false ]; then

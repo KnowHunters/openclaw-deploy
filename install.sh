@@ -76,7 +76,7 @@ spinner() {
     tput civis 2>/dev/null || true
     
     while kill -0 $pid 2>/dev/null; do
-        printf "\r${BLUE}[ %s ]${NC} %s..." "${chars:$i:1}" "$msg"
+        printf "\r${BLUE}[%s]${NC} %s..." "${chars:$i:1}" "$msg"
         i=$(( (i+1) % ${#chars} ))
         sleep $delay
     done
@@ -116,9 +116,9 @@ run_step() {
     fi
     
     if [ $exit_code -eq 0 ]; then
-        printf "\r${GREEN}[ ✓ ]${NC} %s %s\n" "$msg" "$time_str"
+        echo -e "\r${GREEN}[✓]${NC} $msg $time_str"
     else
-        printf "\r${RED}[ ✗ ]${NC} %s %s\n" "$msg" "$time_str"
+        echo -e "\r${RED}[✗]${NC} $msg $time_str"
         echo -e "${RED}错误详情:${NC}"
         tail -n 15 /tmp/openclaw_install.log
         exit 1

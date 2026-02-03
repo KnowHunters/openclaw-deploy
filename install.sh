@@ -71,11 +71,12 @@ spinner() {
     local chars='|/-\'
     local i=0
     while kill -0 $pid 2>/dev/null; do
-        printf "\r${CYAN}[${chars:$i:1}]${NC} "
+        printf "${CYAN}[${chars:$i:1}]${NC} "
         i=$(( (i+1) % 4 ))
         sleep $delay
+        printf "\b\b\b\b"
     done
-    printf "\r    \r"
+    printf "    \b\b\b\b"
 }
 
 run_step() {

@@ -209,55 +209,82 @@ test_api_connection() {
 
 configure_llm_wizard() {
     header
-    echo -e "${BOLD}🧠 智能模型配置向导 (Smart LLM Wizard)${NC}"
-    echo "  1) 🟣 Anthropic (Claude)"
-    echo "  2) 🟢 OpenAI (GPT)"
-    echo "  3) 🔵 DeepSeek"
-    echo "  4) 🌙 Kimi"
-    echo "  5) 🔴 Google"
-    echo "  6) 🔄 OpenRouter"
-    echo "  7) ⚡ Groq"
-    echo "  8) 🟠 Ollama"
-    echo "  9) 🛠  自定义"
+    echo -e "${BOLD}🧠 智能模型配置 (Smart Custom Endpoint)${NC}"
+    echo -e "${GRAY}OpenClaw 官方接口已内置。此向导专注于配置【自定义端点】或【中转服务】。${NC}"
+    echo ""
+    echo "  请选择预设配置 (Presets):"
+    echo "  1) DeepSeek (深度求索)"
+    echo "  2) OpenRouter"
+    echo "  3) Groq"
+    echo "  4) Ollama (本地)"
+    echo "  5) Moonshot (Kimi)"
+    echo "  6) 完全自定义 (Manual)"
+    echo ""
+    echo "  0) 返回"
     echo ""
     read -p "请选择: " p_choice
     
-    local provider=""; local default_url=""
+    local base_url=""
+    local provider_id="custom-llm"
+    local default_model=""
+    
     case $p_choice in
-        1) provider="anthropic";; 2) provider="openai";; 3) provider="deepseek"; default_url="https://api.deepseek.com";;
-        4) provider="kimi"; default_url="https://api.moonshot.cn/v1";; 5) provider="google";;
-        6) provider="openrouter"; default_url="https://openrouter.ai/api/v1";; 7) provider="groq"; default_url="https://api.groq.com/openai/v1";;
-        8) provider="ollama"; default_url="http://localhost:11434";; 9) provider="custom";;
-        *) return ;;
+        1) base_url="https://api.deepseek.com"; default_model="deepseek-chat"; provider_id="deepseek-custom" ;;
+        2) base_url="https://openrouter.ai/api/v1"; default_model="anthropic/claude-3.5-sonnet"; provider_id="openrouter-custom" ;;
+        3) base_url="https://api.groq.com/openai/v1"; default_model="llama3-70b-8192"; provider_id="groq-custom" ;;
+        4) base_url="http://localhost:11434/v1"; default_model="llama3"; provider_id="ollama-custom" ;;
+        5) base_url="https://api.moonshot.cn/v1"; default_model="moonshot-v1-8k"; provider_id="moonshot-custom" ;;
+        6) ;;
+        0) return ;;
+        *) echo "无效选择"; pause; return ;;
     esac
 
-    echo ""; local api_key=""; local base_url=""; local model_id="gpt-4"
+    echo ""
+    echo -e "${CYAN}--- 配置详情 ---${NC}"
+    prompt_input "API Base URL" "$base_url" base_url
     
-    if [ "$provider" == "custom" ]; then
-        prompt_input "API Base URL" "" base_url
-        prompt_input "API Key" "" api_key
-        prompt_input "Model ID" "gpt-4" model_id
-        configure_custom_provider "custom-llm" "$base_url" "$api_key" "$model_id"
-        run_as_user_shell "openclaw models set custom-llm/$model_id"
-    else
-        prompt_input "API Key" "" api_key
-        [ -n "$default_url" ] && prompt_input "Base URL" "$default_url" base_url
-        prompt_input "Model ID" "gpt-4" model_id
-        
-        # 写入 .env (使用 sed防止重复)
-        local key_var="${provider^^}_API_KEY"
-        local url_var="${provider^^}_BASE_URL"
-        
-        run_as_user_shell "mkdir -p '$(dirname $ENV_FILE)' && touch '$ENV_FILE'"
-        run_as_user_shell "sed -i '/export $key_var=/d' '$ENV_FILE' && echo 'export $key_var=$api_key' >> '$ENV_FILE'"
-        
-        if [ -n "$base_url" ]; then
-            run_as_user_shell "sed -i '/export $url_var=/d' '$ENV_FILE' && echo 'export $url_var=$base_url' >> '$ENV_FILE'"
-        fi
-        
-        run_as_user_shell "openclaw models set $provider/$model_id"
+    # 自动修正: 如果用户忘了加 /v1 (除了 Ollama 可能不需要，但 OpenAI 兼容通常需要)
+    # 这里不做强制修正，但给提示
+    if [[ "$base_url" != */v1 ]] && [[ "$base_url" != */v1/ ]]; then
+         echo -e "${YELLOW}提示: 许多兼容接口需要在 URL 末尾加上 /v1${NC}"
     fi
-    echo -e "${GREEN}✓ 配置已保存${NC}"; pause
+
+    local api_key=""
+    prompt_input "API Key" "" api_key
+    prompt_input "模型名称 (Model ID)" "$default_model" model_id
+    
+    # 验证环节
+    echo ""
+    echo -e "${YELLOW}正在进行连通性测试...${NC}"
+    
+    # 构造一个简单的 curl 测试 (比 openclaw agent 更快且不依赖环境)
+    # 注意: 这是一个基本测试，仅验证网络和 Key 格式
+    if [ -n "$api_key" ]; then
+        local auth_header="Authorization: Bearer $api_key"
+        # 尝试列出模型或进行简单对话 (取决于 API 支持)
+        # 为了通用性，我们直接调用 openclaw agent --local
+        if run_as_user_shell "timeout 15 openclaw agent --local --model-override '$model_id' --api-override '$base_url' --key-override '$api_key' --message 'hi' >/dev/null 2>&1"; then
+             echo -e "${GREEN}✓ 连接测试成功！${NC}"
+        else
+             echo -e "${RED}✗ 连接测试未通过 (可能是网络问题或 Key 无效)${NC}"
+             read -p "是否强制保存? [y/N] " force_save
+             if [[ ! $force_save =~ ^[Yy]$ ]]; then
+                 echo "已取消保存。"
+                 pause
+                 return
+             fi
+        fi
+    fi
+
+    # 保存配置
+    echo -e "\n${CYAN}正在写入配置...${NC}"
+    configure_custom_provider "$provider_id" "$base_url" "$api_key" "$model_id"
+    
+    # 设置为当前模型
+    run_as_user_shell "openclaw models set $provider_id/$model_id"
+    
+    echo -e "${GREEN}✓ 配置已完成！当前模型: $provider_id/$model_id${NC}"
+    pause
 }
 
 # --- 模块 C: 人格与模板 ---

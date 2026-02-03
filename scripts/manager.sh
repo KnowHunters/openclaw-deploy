@@ -219,27 +219,208 @@ edit_file_as_user() {
     su - "$OPENCLAW_USER" -c "nano '$file'"
 }
 
+prompt_input() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    echo -ne "${YELLOW}$prompt${NC} [默认: $default]: "
+    read input
+    eval $var_name="\${input:-$default}"
+}
+
+configure_custom_provider() {
+    local provider_id="$1"
+    local base_url="$2"
+    local api_key="$3"
+    local model_id="$4"
+    
+    echo -e "\n${CYAN}正在配置自定义提供商: $provider_id...${NC}"
+    
+    # 使用 Node.js 脚本修改 openclaw.json，避免 sed 复杂操作
+    run_as_user_shell "node -e \"
+    const fs = require('fs');
+    const configFile = '$CONFIG_FILE';
+    try {
+        let config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+        if (!config.models) config.models = {};
+        if (!config.models.providers) config.models.providers = {};
+        
+        config.models.providers['$provider_id'] = {
+            baseUrl: '$base_url',
+            apiKey: '$api_key',
+            models: [{ 
+                id: '$model_id',
+                name: '$model_id',
+                contextWindow: 128000,
+                maxTokens: 16384
+            }]
+        };
+        fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+        console.log('配置已更新');
+    } catch (e) { console.error('配置失败:', e); process.exit(1); }
+    \""
+}
+
+test_api_connection() {
+    echo -e "\n${CYAN}⏳ 正在测试 API 连接 (发送 'Hello')...${NC}"
+    if run_as_user_shell "timeout 20 openclaw agent --local --message 'Hello' >/dev/null 2>&1"; then
+        echo -e "${GREEN}✓ 连接测试成功！API 配置有效。${NC}"
+    else
+        echo -e "${RED}✗ 连接测试失败。请检查 API Key 或 BaseURL 是否正确。${NC}"
+        echo -e "${GRAY}提示: 您可以稍后使用 'openclaw doctor' 进行深度诊断。${NC}"
+    fi
+    pause
+}
+
+configure_llm_wizard() {
+    header
+    echo -e "${BOLD}🧠 智能模型配置向导 (Smart LLM Wizard)${NC}"
+    echo ""
+    echo "  1) 🟣 Anthropic (Claude)"
+    echo "  2) 🟢 OpenAI (GPT)"
+    echo "  3) 🔵 DeepSeek (深度求索)"
+    echo "  4) 🌙 Kimi (Moonshot)"
+    echo "  5) 🔴 Google (Gemini)"
+    echo "  6) 🔄 OpenRouter"
+    echo "  7) ⚡ Groq"
+    echo "  8) 🟠 Ollama (本地)"
+    echo "  9) 🛠  自定义 (Custom - 任意兼容 API)"
+    echo ""
+    echo "  0) 返回"
+    echo ""
+    read -p "请选择提供商: " p_choice
+    
+    local provider=""
+    local provider_id=""
+    local default_url=""
+    local default_model=""
+    local env_prefix=""
+    
+    case $p_choice in
+        1) provider="anthropic"; env_prefix="ANTHROPIC"; default_model="claude-3-5-sonnet-20240620" ;;
+        2) provider="openai"; env_prefix="OPENAI"; default_model="gpt-4o" ;;
+        3) provider="deepseek"; env_prefix="DEEPSEEK"; default_url="https://api.deepseek.com"; default_model="deepseek-chat" ;;
+        4) provider="kimi"; env_prefix="MOONSHOT"; default_url="https://api.moonshot.cn/v1"; default_model="moonshot-v1-8k" ;;
+        5) provider="google"; env_prefix="GOOGLE"; default_model="gemini-1.5-pro" ;;
+        6) provider="openrouter"; env_prefix="OPENAI"; default_url="https://openrouter.ai/api/v1"; default_model="anthropic/claude-3-5-sonnet" ;;
+        7) provider="groq"; env_prefix="OPENAI"; default_url="https://api.groq.com/openai/v1"; default_model="llama3-70b-8192" ;;
+        8) provider="ollama"; env_prefix="OLLAMA"; default_url="http://localhost:11434"; default_model="llama3" ;;
+        9) provider="custom";;
+        0) return ;;
+        *) echo "无效选择"; pause; return ;;
+    esac
+
+    echo ""
+    local api_key=""
+    local base_url=""
+    local model_id=""
+    
+    # 1. Base URL
+    if [ "$provider" == "custom" ]; then
+        prompt_input "API Base URL" "https://api.openai.com/v1" base_url
+        prompt_input "API Key" "" api_key
+        prompt_input "模型名称 (Model ID)" "gpt-4" model_id
+        # 自定义模式下，我们将创建一个名为 'custom-llm' 的 provider
+        configure_custom_provider "custom-llm" "$base_url" "$api_key" "$model_id"
+        
+        # 设置默认模型
+        run_as_user_shell "openclaw models set custom-llm/$model_id"
+        
+    elif [ "$provider" == "ollama" ]; then
+         prompt_input "Ollama URL" "$default_url" base_url
+         prompt_input "模型名称" "$default_model" model_id
+         
+         # 写入 .env
+         run_as_user_shell "sed -i '/export OLLAMA_HOST=/d' '$ENV_FILE' && echo 'export OLLAMA_HOST=$base_url' >> '$ENV_FILE'"
+         run_as_user_shell "openclaw models set ollama/$model_id"
+         
+    else
+        # 标准提供商
+        if [ -n "$default_url" ]; then
+             prompt_input "API Base URL (留空用默认)" "$default_url" base_url
+        fi
+        prompt_input "API Key" "" api_key
+        prompt_input "模型名称" "$default_model" model_id
+        
+        # 写入 .env
+        local key_var="${env_prefix}_API_KEY"
+        local url_var="${env_prefix}_BASE_URL"
+        
+        # 删除旧变量并追加新变量
+        run_as_user_shell "sed -i '/export $key_var=/d' '$ENV_FILE' && echo 'export $key_var=$api_key' >> '$ENV_FILE'"
+        if [ -n "$base_url" ]; then
+            run_as_user_shell "sed -i '/export $url_var=/d' '$ENV_FILE' && echo 'export $url_var=$base_url' >> '$ENV_FILE'"
+        fi
+        
+        # 设置默认模型
+        run_as_user_shell "openclaw models set $provider/$model_id"
+    fi
+    
+    echo -e "${GREEN}✓ 配置已保存${NC}"
+    
+    # 询问是否测试
+    echo ""
+    read -p "是否立即测试连接? [Y/n] " t_choice
+    case $t_choice in 
+        [yY]*) test_api_connection ;;
+    esac
+}
+
+configure_identity() {
+    header
+    echo -e "${BOLD}🆔 身份与个性化设置${NC}"
+    echo ""
+    
+    local bot_name=""
+    local user_name=""
+    local timezone=""
+    
+    prompt_input "机器人名字 (Bot Name)" "Clawd" bot_name
+    prompt_input "你的称呼 (User Name)" "Master" user_name
+    prompt_input "系统时区" "Asia/Shanghai" timezone
+    
+    # 更新配置 (使用 openclaw config set)
+    echo -e "\n${CYAN}正在更新配置...${NC}"
+    run_as_user_shell "openclaw config set agent.name '$bot_name'"
+    run_as_user_shell "openclaw config set user.name '$user_name'"
+    
+    # 更改时区需要 root 权限
+    if [ -n "$timezone" ]; then
+        if sudo timedatectl set-timezone "$timezone" 2>/dev/null; then
+            echo -e "${GREEN}✓ 时区已设置为 $timezone${NC}"
+        else
+            echo -e "${RED}✗ 时区设置失败${NC}"
+        fi
+    fi
+    
+    echo -e "${GREEN}✓ 身份信息更新完成${NC}"
+    pause
+}
+
 menu_config() {
     while true; do
         header
         echo -e "${BOLD}⚙️ 配置中心${NC}"
         echo ""
-        echo "  1) 编辑主配置 (openclaw.json)"
-        echo "  2) 编辑环境变量 (.env)"
-        echo "  3) 切换 LLM 模型 (简易向导)"
+        echo "  1) 智能模型配置向导 (Smart LLM Wizard)"
+        echo "  2) 身份与个性化设置 (Identity)"
+        echo "  3) --------------------------------"
+        echo "  4) 手动编辑主配置 (Nano)"
+        echo "  5) 手动编辑环境变量 (Nano)"
+        echo "  6) 测试 API 连接"
         echo ""
         echo "  0) 返回主菜单"
         echo ""
         read -p "请选择: " choice
         
         case $choice in
-            1) edit_file_as_user "$CONFIG_FILE" ;;
-            2) edit_file_as_user "$ENV_FILE" ;;
-            3) 
-                echo -e "\n${YELLOW}暂未实现自动切换，请手动编辑 openclaw.json${NC}"
-                pause 
-                ;;
+            1) configure_llm_wizard ;;
+            2) configure_identity ;;
+            4) edit_file_as_user "$CONFIG_FILE" ;;
+            5) edit_file_as_user "$ENV_FILE" ;;
+            6) test_api_connection ;;
             0) return ;;
+            *) ;;
         esac
     done
 }

@@ -462,9 +462,9 @@ show_completion() {
     echo ""
     echo ""
     
-    # 1. 运行配置向导
+    # 1. 运行配置向导 (使用 su - 确保加载 .bashrc 中的 brew 环境变量)
     log_info "启动配置向导..."
-    sudo -u "$OPENCLAW_USER" openclaw onboard
+    su - "$OPENCLAW_USER" -c "openclaw onboard"
     
     # 2. 确保服务运行并保存
     echo ""

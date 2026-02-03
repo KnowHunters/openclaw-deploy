@@ -295,7 +295,7 @@ install_dependencies() {
     
     # 将 brew 加入当前 PATH 供后续步骤使用
     if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
-        eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     fi
 }
 

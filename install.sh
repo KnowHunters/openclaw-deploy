@@ -425,7 +425,7 @@ show_completion() {
     log_info "清理旧进程..."
     # 彻底杀掉该用户的所有 PM2 进程，防止僵尸守护进程导致的 EACCES
     pkill -u "$OPENCLAW_USER" -f pm2 >/dev/null 2>&1 || true
-    sudo -u "$OPENCLAW_USER" pm2 kill >/dev/null 2>&1 || true
+    su - "$OPENCLAW_USER" -c "pm2 kill" >/dev/null 2>&1 || true
     
     # [关键修复] 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
     log_info "正在修正文件权限..."
@@ -435,8 +435,8 @@ show_completion() {
     # 确保 node 权限正常 (防止 extreme case)
     if [ -f /usr/bin/node ]; then chmod 755 /usr/bin/node; fi
     
-    sudo -u "$OPENCLAW_USER" pm2 start "$WORKSPACE_DIR/start.sh" --name openclaw
-    sudo -u "$OPENCLAW_USER" pm2 save
+    su - "$OPENCLAW_USER" -c "pm2 start \"$WORKSPACE_DIR/start.sh\" --name openclaw"
+    su - "$OPENCLAW_USER" -c "pm2 save"
     
     echo ""
     echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"

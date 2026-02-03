@@ -517,6 +517,7 @@ show_completion() {
     echo ""
     echo -e "   ${CYAN}OpenClaw CLI:${NC}"
     echo -e "     系统诊断 : ${GRAY}openclaw doctor${NC}"
+    echo -e "     重新配置 : ${GRAY}openclaw configure${NC}"
     echo -e "     查看帮助 : ${GRAY}openclaw --help${NC}"
     echo ""
     echo -e "${YELLOW}👉 下一步操作建议${NC}"

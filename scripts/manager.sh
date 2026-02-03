@@ -31,14 +31,15 @@ pause() {
 header() {
     clear
     echo -e "${CYAN}"
-    echo "╔═════════════════════════════════════════════════════════════════════╗"
-    echo "║   ___                    ____ _                                     ║"
-    echo "║  / _ \ _ __   ___ _ __  / ___| | __ ___      __     Admin Panel     ║"
-    echo "║ | | | | '_ \ / _ \ '_ \| |   | |/ _\` \ \ /\ / /     v1.1            ║"
-    echo "║ | |_| | |_) |  __/ | | | |___| | (_| |\ V  V /                      ║"
-    echo "║  \___/| .__/ \___|_| |_|\____|_|\__,_| \_/\_/                       ║"
-    echo "║       |_|                                                           ║"
-    echo "╚═════════════════════════════════════════════════════════════════════╝"
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║     ___                    ____ _                         ║"
+    echo "║    / _ \ _ __   ___ _ __  / ___| | __ ___      __         ║"
+    echo "║   | | | | '_ \ / _ \ '_ \| |   | |/ _\` \ \ /\ / /         ║"
+    echo "║   | |_| | |_) |  __/ | | | |___| | (_| |\ V  V /          ║"
+    echo "║    \___/| .__/ \___|_| |_|\____|_|\__,_| \_/\_/           ║"
+    echo "║         |_|                                               ║"
+    echo "║                    管 理 面 板                            ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
     
     # 状态栏
@@ -252,6 +253,28 @@ fix_permissions() {
     pause
 }
 
+update_scripts() {
+    echo -e "\n${CYAN}→ 正在更新管理脚本套件...${NC}"
+    local scripts=("health-monitor.sh" "log-cleanup.sh" "backup.sh" "restore.sh" "manager.sh" "lazy-optimize.sh")
+    local base_url="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/scripts"
+    
+    for script in "${scripts[@]}"; do
+        echo -ne "  下载 $script ... "
+        if run_as_user_shell "curl -fsSL '$base_url/$script' -o '$SCRIPT_DIR/$script'"; then
+            chmod +x "$SCRIPT_DIR/$script"
+            chown "$OPENCLAW_USER:$OPENCLAW_USER" "$SCRIPT_DIR/$script"
+            echo -e "${GREEN}[OK]${NC}"
+        else
+            echo -e "${RED}[Failed]${NC}"
+        fi
+    done
+    
+    echo -e "${GREEN}✓ 所有脚本已更新至最新版本${NC}"
+    echo -e "${YELLOW}即将重启管理面板...${NC}"
+    sleep 2
+    exec "$SCRIPT_DIR/manager.sh"
+}
+
 menu_maintenance() {
     while true; do
         header
@@ -262,7 +285,8 @@ menu_maintenance() {
         echo "  3) 运行系统诊断 (Doctor)"
         echo "  4) 一键懒人优化 (Lazy Optimize)"
         echo "  5) 备份与恢复 (Backup/Restore)"
-        echo "  6) 更新 OpenClaw (Update)"
+        echo "  6) 更新 OpenClaw (App Update)"
+        echo "  7) 更新管理脚本 (Self Update)"
         echo ""
         echo "  0) 返回主菜单"
         echo ""
@@ -291,6 +315,7 @@ menu_maintenance() {
                 run_as_user pm2 restart openclaw
                 echo -e "${GREEN}✓ 更新完成${NC}"
                 pause ;;
+            7) update_scripts ;;
             0) return ;;
         esac
     done

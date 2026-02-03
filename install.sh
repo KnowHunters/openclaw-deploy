@@ -180,6 +180,15 @@ pre_flight_check() {
     fi
     
     log_info "部署目标: $OPENCLAW_USER @ $GATEWAY_BIND:$GATEWAY_PORT"
+    log_info "部署目标: $OPENCLAW_USER @ $GATEWAY_BIND:$GATEWAY_PORT"
+}
+
+ensure_user_exists() {
+    if id "$OPENCLAW_USER" &>/dev/null; then
+        log_info "用户 $OPENCLAW_USER 已存在"
+    else
+        run_step "创建运行用户 ($OPENCLAW_USER)" "useradd -m -s /bin/bash $OPENCLAW_USER"
+    fi
 }
 
 # ════════════════════ 系统调优 ════════════════════
@@ -306,12 +315,8 @@ prepare_workspace() {
     echo -e "${GRAY}  [4/6] 准备工作区                                         ${NC}"
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
-    # 创建用户
-    if id "$OPENCLAW_USER" &>/dev/null; then
-        log_info "用户 $OPENCLAW_USER 已存在"
-    else
-        run_step "创建运行用户 ($OPENCLAW_USER)" "useradd -m -s /bin/bash $OPENCLAW_USER"
-    fi
+    # 创建用户 (已提前到 ensure_user_exists)
+
     
     run_step "初始化目录结构" "
         mkdir -p $WORKSPACE_DIR
@@ -481,6 +486,11 @@ main() {
     # 1. 系统检查与优化
     pre_flight_check
     optimize_system
+    
+    # 1.5 确保用户存在 (Linuxbrew 安装需要)
+    ensure_user_exists
+
+    # 2. 安装基础依赖和 CLI
     
     # 2. 安装基础依赖和 CLI
     install_dependencies

@@ -501,23 +501,44 @@ menu_skills_browse() {
     done
 }
 
+
+skill_search() {
+    echo -e "\n${CYAN}🔍 搜索技能库 (Search Online)${NC}"
+    read -p "请输入搜索关键词 (如 weather, notion): " query
+    if [ -n "$query" ]; then
+        echo -e "\n${YELLOW}正在搜索 '$query'...${NC}"
+        run_as_user_shell "npx -y clawhub@latest search '$query'"
+        pause
+    fi
+}
+
+skill_explore() {
+    echo -e "\n${CYAN}🌍 正在探索最新技能 (Explore Latest)...${NC}"
+    run_as_user_shell "npx -y clawhub@latest explore"
+    pause
+}
+
 menu_skills() {
     while true; do
         header
         echo -e "${BOLD}📦 技能市场 (Skill Market)${NC}"
         echo ""
-        echo "  1) 浏览热门推荐 (Browse Popular)"
-        echo "  2) 手动安装技能 (Install Manually)"
-        echo "  3) 查看已安装技能 (List Installed)"
+        echo "  1) 🔍 搜索技能库 (Search Online)"
+        echo "  2) 🌍 探索最新技能 (Explore Latest)"
+        echo "  3) ⭐ 浏览热门精选 (Featured)"
+        echo "  4) 💿 查看已安装技能 (List Installed)"
+        echo "  5) 🔧 手动安装 (Manual)"
         echo ""
         echo "  0) 返回主菜单"
         echo ""
         read -p "请选择: " choice
         
         case $choice in
-            1) menu_skills_browse ;;
-            2) read -p "请输入技能名称: " sname; [ ! -z "$sname" ] && install_skill "$sname" ;;
-            3) echo -e "\n${CYAN}已安装技能目录 (${WORKSPACE_DIR}/skills):${NC}"; ls -1 "$WORKSPACE_DIR/skills" 2>/dev/null || echo "暂无已安装技能"; pause ;;
+            1) skill_search ;;
+            2) skill_explore ;;
+            3) menu_skills_browse ;;
+            4) echo -e "\n${CYAN}已安装技能 (${WORKSPACE_DIR}/skills):${NC}"; ls -1 "$WORKSPACE_DIR/skills" 2>/dev/null || echo "暂无"; pause ;;
+            5) read -p "输入技能名称: " sname; [ ! -z "$sname" ] && install_skill "$sname" ;;
             0) return ;;
         esac
     done

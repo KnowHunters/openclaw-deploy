@@ -244,9 +244,17 @@ configure_llm_wizard() {
         [ -n "$default_url" ] && prompt_input "Base URL" "$default_url" base_url
         prompt_input "Model ID" "gpt-4" model_id
         
-        # 简单写入 .env (简化版)
-        run_as_user_shell "echo 'export ${provider^^}_API_KEY=$api_key' >> '$ENV_FILE'"
-        [ -n "$base_url" ] && run_as_user_shell "echo 'export ${provider^^}_BASE_URL=$base_url' >> '$ENV_FILE'"
+        # 写入 .env (使用 sed防止重复)
+        local key_var="${provider^^}_API_KEY"
+        local url_var="${provider^^}_BASE_URL"
+        
+        run_as_user_shell "mkdir -p '$(dirname $ENV_FILE)' && touch '$ENV_FILE'"
+        run_as_user_shell "sed -i '/export $key_var=/d' '$ENV_FILE' && echo 'export $key_var=$api_key' >> '$ENV_FILE'"
+        
+        if [ -n "$base_url" ]; then
+            run_as_user_shell "sed -i '/export $url_var=/d' '$ENV_FILE' && echo 'export $url_var=$base_url' >> '$ENV_FILE'"
+        fi
+        
         run_as_user_shell "openclaw models set $provider/$model_id"
     fi
     echo -e "${GREEN}✓ 配置已保存${NC}"; pause
@@ -448,19 +456,68 @@ menu_service() {
     done
 }
 
+menu_skills_browse() {
+    while true; do
+        header
+        echo -e "${BOLD}📦 技能推荐 > 浏览安装${NC}"
+        echo ""
+        echo -e "${CYAN}🛠  效率工具${NC}"
+        echo "  1) Obsidian        (笔记同步)"
+        echo "  2) Notion          (知识库)"
+        echo "  3) Google Calendar (日历管理)"
+        echo ""
+        echo -e "${CYAN}🔍 搜索资讯${NC}"
+        echo "  4) Google Search   (谷歌搜索)"
+        echo "  5) Wikipedia       (维基百科)"
+        echo "  6) HackerNews      (科技资讯)"
+        echo ""
+        echo -e "${CYAN}🎮 娱乐生活${NC}"
+        echo "  7) GOG             (游戏查询)"
+        echo "  8) Spotify         (音乐控制)"
+        echo ""
+        echo -e "${CYAN}💻 开发运维${NC}"
+        echo "  9) Shell           (执行命令 - 慎用)"
+        echo "  10) Git            (代码管理)"
+        echo ""
+        echo "  m) 手动输入技能名安装"
+        echo "  0) 返回上级"
+        echo ""
+        read -p "请选择安装: " sk_choice
+        
+        case $sk_choice in
+            1) install_skill "obsidian" ;;
+            2) install_skill "notion" ;;
+            3) install_skill "google-calendar" ;;
+            4) install_skill "google-search" ;;
+            5) install_skill "wikipedia" ;;
+            6) install_skill "hackernews" ;;
+            7) install_skill "gog" ;;
+            8) install_skill "spotify" ;;
+            9) install_skill "shell" ;;
+            10) install_skill "git" ;;
+            m) read -p "请输入技能名称 (如 weather): " manual_name; [ ! -z "$manual_name" ] && install_skill "$manual_name" ;;
+            0) return ;;
+        esac
+    done
+}
+
 menu_skills() {
     while true; do
         header
-        echo -e "${BOLD}📦 技能市场${NC}"
-        echo "  ... (功能保持不变，省略以节省空间)"
-        echo "  1) 浏览热门技能"
-        echo "  2) 手动安装"
-        echo "  0) 返回"
+        echo -e "${BOLD}📦 技能市场 (Skill Market)${NC}"
+        echo ""
+        echo "  1) 浏览热门推荐 (Browse Popular)"
+        echo "  2) 手动安装技能 (Install Manually)"
+        echo "  3) 查看已安装技能 (List Installed)"
+        echo ""
+        echo "  0) 返回主菜单"
         echo ""
         read -p "请选择: " choice
+        
         case $choice in
-            1) install_skill "obsidian";; 
-            2) read -p "Name: " n; install_skill "$n";;
+            1) menu_skills_browse ;;
+            2) read -p "请输入技能名称: " sname; [ ! -z "$sname" ] && install_skill "$sname" ;;
+            3) echo -e "\n${CYAN}已安装技能目录 (${WORKSPACE_DIR}/skills):${NC}"; ls -1 "$WORKSPACE_DIR/skills" 2>/dev/null || echo "暂无已安装技能"; pause ;;
             0) return ;;
         esac
     done

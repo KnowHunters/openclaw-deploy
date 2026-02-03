@@ -132,7 +132,6 @@ update_openclaw() {
     sudo -u "$OPENCLAW_USER" bash -c "cd $WORKSPACE_DIR && npm update"
     sudo -u "$OPENCLAW_USER" pm2 restart openclaw
     echo -e "${GREEN}✓ 更新完成${NC}"
-    echo -e "${GREEN}✓ 更新完成${NC}"
 }
 
 run_lazy_optimize() {

@@ -267,7 +267,7 @@ install_dependencies() {
     run_step "更新软件源" "apt-get update -qq"
     run_step "安装基础组件" "apt-get install -yqq curl wget git build-essential ca-certificates gnupg lsb-release jq unzip"
     run_step "安装开发工具" "apt-get install -yqq ripgrep fd-find bat htop tree"
-    run_step "安装媒体处理" "apt-get install -yqq ffmpeg imagemagick graphicsmagick tesseract-ocr poppler-utils"
+    run_step "安装媒体工具" "apt-get install -yqq ffmpeg imagemagick graphicsmagick tesseract-ocr poppler-utils"
     run_step "安装 Python 环境" "apt-get install -yqq python3-full python3-pip python3-venv"
     
     # 软链修正
@@ -340,9 +340,6 @@ prepare_workspace() {
     echo -e "${GRAY}  [4/6] 准备工作区                                         ${NC}"
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
-    # 创建用户 (已提前到 ensure_user_exists)
-
-    
     run_step "初始化目录结构" "
         mkdir -p $WORKSPACE_DIR
         mkdir -p $SCRIPTS_DIR
@@ -377,12 +374,11 @@ prepare_workspace() {
     "
 }
 
-# ════════════════════ 完成配置并启动 ════════════════════
-# ════════════════════ 监控脚本 ════════════════════
+# ════════════════════ 管理优化套件 ════════════════════
 install_monitoring_scripts() {
     echo ""
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${GRAY}  [5/6] 安装监控套件                                       ${NC}"
+    echo -e "${GRAY}  [5/6] 下载管理优化套件                                       ${NC}"
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
     local scripts=("health-monitor.sh" "log-cleanup.sh" "backup.sh" "restore.sh" "manager.sh" "lazy-optimize.sh")
@@ -411,7 +407,6 @@ setup_infrastructure() {
     fi
 
     # 创建 PM2 启动脚本
-    # 修复 Here-Doc 缩进问题：EOF 必须在行首
     run_step "创建启动脚本" "
 cat > $WORKSPACE_DIR/start.sh << 'SCRIPT'
 #!/bin/bash
@@ -429,7 +424,7 @@ chmod +x $WORKSPACE_DIR/start.sh
 chown $OPENCLAW_USER:$OPENCLAW_USER $WORKSPACE_DIR/start.sh
 "
     
-    # 配置 PM2 开机自启 (仅注册 PM2 本身)
+    # 配置 PM2 开机自启
     run_step "配置 PM2 开机自启" "env PATH=\$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $OPENCLAW_USER --hp /home/$OPENCLAW_USER"
     
     # 安装 CLI 自动补全
@@ -488,7 +483,7 @@ show_completion() {
     pkill -u "$OPENCLAW_USER" -f pm2 >/dev/null 2>&1 || true
     su - "$OPENCLAW_USER" -c "pm2 kill" >/dev/null 2>&1 || true
     
-    # [关键修复] 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
+    # 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
     log_info "正在修正文件权限..."
     chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "/home/$OPENCLAW_USER"
 
@@ -508,12 +503,12 @@ show_completion() {
     echo -e "   • 本地地址 : http://$GATEWAY_BIND:$GATEWAY_PORT"
     echo -e "   • 公网地址 : http://$(curl -s ifconfig.me):$GATEWAY_PORT"
     echo ""
-    echo -e "${BOLD}� 安全与权限${NC}"
+    echo -e "${BOLD}安全与权限${NC}"
     echo -e "   服务运行用户: ${CYAN}$OPENCLAW_USER${NC} (非 Root)"
     echo -e "   手动调试时，请${RED}务必切换用户${NC}以避免权限错误："
     echo -e "   切换指令: ${GREEN}su - $OPENCLAW_USER${NC}"
     echo ""
-    echo -e "${BOLD}�🛠  常用指令 (Cheat Sheet)${NC}"
+    echo -e "${BOLD}常用指令${NC}"
     echo -e "   ${CYAN}服务控制 (PM2):${NC}"
     echo -e "     启动服务 : ${GRAY}pm2 start openclaw${NC}"
     echo -e "     停止服务 : ${GRAY}pm2 stop openclaw${NC}"

@@ -381,7 +381,7 @@ install_monitoring_scripts() {
     echo -e "${GRAY}  [5/6] 下载管理优化套件                                       ${NC}"
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
-    local scripts=("health-monitor.sh" "log-cleanup.sh" "backup.sh" "restore.sh" "manager.sh" "lazy-optimize.sh")
+    local scripts=("health-monitor.sh" "log-cleanup.sh" "backup.sh" "restore.sh" "manager.sh")
     for script in "${scripts[@]}"; do
         run_step "下载 $script" "curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/scripts/$script -o $SCRIPTS_DIR/$script"
         chmod +x "$SCRIPTS_DIR/$script"

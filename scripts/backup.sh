@@ -39,6 +39,7 @@ tar -czf "$BACKUP_FILE" \
     . 2>/dev/null
 
 if [ $? -eq 0 ]; then
+    chown "$OPENCLAW_USER:$OPENCLAW_USER" "$BACKUP_FILE"
     SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
     echo "✓ 备份成功 (大小: $SIZE)"
     

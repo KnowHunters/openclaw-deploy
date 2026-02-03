@@ -67,14 +67,16 @@ tar -xzf "$SELECTED" -C "$WORKSPACE_DIR"
 chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "$WORKSPACE_DIR"
 
 # 重新安装依赖
+# 重新安装依赖
 echo "→ 重新安装依赖..."
 cd "$WORKSPACE_DIR"
-sudo -u "$OPENCLAW_USER" npm install --silent 2>/dev/null || true
+# 使用 login shell 确保环境变量(如PATH)正确加载
+su - "$OPENCLAW_USER" -c "cd $WORKSPACE_DIR && npm install --silent" 2>/dev/null || true
 
 # 启动服务
 echo "→ 启动服务..."
-sudo -u "$OPENCLAW_USER" pm2 start openclaw 2>/dev/null || \
-sudo -u "$OPENCLAW_USER" bash -c "cd $WORKSPACE_DIR && pm2 start npm --name openclaw -- start" 2>/dev/null
+su - "$OPENCLAW_USER" -c "pm2 start openclaw" 2>/dev/null || \
+su - "$OPENCLAW_USER" -c "cd $WORKSPACE_DIR && pm2 start npm --name openclaw -- start" 2>/dev/null
 
 echo ""
 echo "✓ 恢复完成"

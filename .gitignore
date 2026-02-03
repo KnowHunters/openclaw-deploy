@@ -1,0 +1,16 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Node
+node_modules/
+dist/
+
+# Env & Config (Don't commit secrets!)
+.env
+config.json

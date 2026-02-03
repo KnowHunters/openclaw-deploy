@@ -180,7 +180,6 @@ pre_flight_check() {
     fi
     
     log_info "部署目标: $OPENCLAW_USER @ $GATEWAY_BIND:$GATEWAY_PORT"
-    log_info "部署目标: $OPENCLAW_USER @ $GATEWAY_BIND:$GATEWAY_PORT"
 }
 
 ensure_user_exists() {

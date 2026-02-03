@@ -67,16 +67,21 @@ EOF
 
 spinner() {
     local pid=$1
-    local delay=0.15
-    local chars='|/-\'
+    local msg=$2
+    local delay=0.1
+    local chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
     local i=0
+    
+    # 隐藏光标
+    tput civis 2>/dev/null || true
+    
     while kill -0 $pid 2>/dev/null; do
-        printf "${CYAN}[${chars:$i:1}]${NC} "
-        i=$(( (i+1) % 4 ))
+        printf "\r${BLUE}[ %s ]${NC} %s..." "${chars:$i:1}" "$msg"
+        i=$(( (i+1) % ${#chars} ))
         sleep $delay
-        printf "\b\b\b\b"
     done
-    printf "    \b\b\b\b"
+    
+    # 恢复光标在 run_step 结束时处理
 }
 
 run_step() {
@@ -84,17 +89,23 @@ run_step() {
     local cmd="$2"
     local step_start=$(date +%s)
     
-    echo -ne "${BLUE}[*]${NC} $msg..."
-    
+    # 启动后台进程
     eval "$cmd" > /tmp/openclaw_install.log 2>&1 &
     local pid=$!
-    spinner $pid
+    
+    # 显示 Spinner
+    spinner $pid "$msg"
+    
     wait $pid
     local exit_code=$?
     local step_end=$(date +%s)
     local duration=$((step_end - step_start))
     
-    # 格式化时间显示
+    # 恢复光标
+    tput cnorm 2>/dev/null || true
+    
+    # 清除行并重写最终状态
+    # \033[K = 清除光标后所有内容
     local time_str=""
     if [ $duration -ge 60 ]; then
         local min=$((duration / 60))
@@ -105,9 +116,9 @@ run_step() {
     fi
     
     if [ $exit_code -eq 0 ]; then
-        echo -e "${GREEN}[✓]${NC} $time_str"
+        printf "\r${GREEN}[ ✓ ]${NC} %s %s\n" "$msg" "$time_str"
     else
-        echo -e "${RED}[✗]${NC} $time_str"
+        printf "\r${RED}[ ✗ ]${NC} %s %s\n" "$msg" "$time_str"
         echo -e "${RED}错误详情:${NC}"
         tail -n 15 /tmp/openclaw_install.log
         exit 1

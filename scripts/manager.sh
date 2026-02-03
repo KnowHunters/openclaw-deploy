@@ -49,6 +49,7 @@ show_menu() {
     echo -e "${GREEN}维护${NC}"
     echo "  10) 清理日志"
     echo "  11) 更新 OpenClaw"
+    echo "  12) 一键优化 (Token优化版)"
     echo ""
     echo "  0) 退出"
     echo ""
@@ -131,13 +132,22 @@ update_openclaw() {
     sudo -u "$OPENCLAW_USER" bash -c "cd $WORKSPACE_DIR && npm update"
     sudo -u "$OPENCLAW_USER" pm2 restart openclaw
     echo -e "${GREEN}✓ 更新完成${NC}"
+    echo -e "${GREEN}✓ 更新完成${NC}"
+}
+
+run_lazy_optimize() {
+    if [ -f "$SCRIPT_DIR/lazy-optimize.sh" ]; then
+        sudo bash "$SCRIPT_DIR/lazy-optimize.sh"
+    else
+        echo -e "${RED}✗ lazy-optimize.sh 未找到${NC}"
+    fi
 }
 
 # 主循环
 while true; do
     show_banner
     show_menu
-    read -p "请选择操作 [0-11]: " choice
+    read -p "请选择操作 [0-12]: " choice
     
     case $choice in
         1) start_service ;;
@@ -151,6 +161,7 @@ while true; do
         9) restore_backup ;;
         10) cleanup_logs ;;
         11) update_openclaw ;;
+        12) run_lazy_optimize ;;
         0) echo "再见!"; exit 0 ;;
         *) echo -e "${RED}无效选择${NC}" ;;
     esac

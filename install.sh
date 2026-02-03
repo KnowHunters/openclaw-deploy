@@ -273,6 +273,30 @@ install_dependencies() {
     # PM2 日志轮转
     pm2 install pm2-logrotate >/dev/null 2>&1 || true
     pm2 set pm2-logrotate:max_size 10M >/dev/null 2>&1 || true
+
+    # Linuxbrew (Homebrew) - 解决 Skill 依赖问题 (camsnap, gog 等)
+    if [ ! -d "/home/linuxbrew/.linuxbrew" ]; then
+        run_step "准备 Linuxbrew 目录" "
+            mkdir -p /home/linuxbrew/.linuxbrew
+            chown -R $OPENCLAW_USER:$OPENCLAW_USER /home/linuxbrew
+        "
+        
+        run_step "安装 Linuxbrew (耗时较长)" "
+            su - $OPENCLAW_USER -c 'NONINTERACTIVE=1 /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"'
+        "
+        
+        run_step "配置 Linuxbrew 环境" "
+            echo 'eval \"\$(\/home/linuxbrew\/.linuxbrew\/bin\/brew shellenv)\"' >> /home/$OPENCLAW_USER/.bashrc
+            echo 'eval \"\$(\/home/linuxbrew\/.linuxbrew\/bin\/brew shellenv)\"' >> /home/$OPENCLAW_USER/.profile
+        "
+    else
+        log_ok "Linuxbrew 已安装"
+    fi
+    
+    # 将 brew 加入当前 PATH 供后续步骤使用
+    if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+        eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"
+    fi
 }
 
 # ════════════════════ 部署工作区 ════════════════════

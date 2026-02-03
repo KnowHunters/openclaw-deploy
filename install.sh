@@ -301,8 +301,20 @@ prepare_workspace() {
                 log_info "备份至 ${WORKSPACE_DIR}_$BACKUP_NAME..."
                 cp -r "$WORKSPACE_DIR" "${WORKSPACE_DIR}_$BACKUP_NAME"
             fi
-        fi
     fi
+    fi
+
+    # 配置 NPM 本地环境 (解决权限问题)
+    run_step "配置 NPM 本地环境" "
+        mkdir -p /home/$OPENCLAW_USER/.npm-global
+        chown $OPENCLAW_USER:$OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global
+        sudo -u $OPENCLAW_USER npm config set prefix '/home/$OPENCLAW_USER/.npm-global'
+        
+        # 添加到 .bashrc
+        if ! grep -q 'npm-global/bin' /home/$OPENCLAW_USER/.bashrc; then
+            echo 'export PATH=/home/$OPENCLAW_USER/.npm-global/bin:\$PATH' >> /home/$OPENCLAW_USER/.bashrc
+        fi
+    "
 }
 
 # ════════════════════ 完成配置并启动 ════════════════════
@@ -346,6 +358,7 @@ cat > $WORKSPACE_DIR/start.sh << 'SCRIPT'
 cd /home/openclaw/openclaw-bot
 # 加载环境变量
 set -a
+export PATH=/home/openclaw/.npm-global/bin:$PATH
 # 如果 .env 存在则加载
 [ -f .env ] && source .env
 set +a
@@ -406,13 +419,22 @@ show_completion() {
     # 无论 onboard 是否启动了服务，我们都强制使用 PM2 接管
     sudo -u "$OPENCLAW_USER" pm2 delete openclaw >/dev/null 2>&1 || true
     
+    # [关键修复] 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
+    log_info "正在修正文件权限..."
+    chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "/home/$OPENCLAW_USER"
+
     log_info "启动 OpenClaw 服务..."
     sudo -u "$OPENCLAW_USER" pm2 start "$WORKSPACE_DIR/start.sh" --name openclaw
     sudo -u "$OPENCLAW_USER" pm2 save
     
     echo ""
-    log_ok "OpenClaw 部署完成！"
-    echo -e "   状态查看: ${CYAN}su - $OPENCLAW_USER -c 'pm2 status'${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}  🎉  部署成功！服务已后台运行${NC}"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "   • 访问地址 : http://$(curl -s ifconfig.me):$GATEWAY_PORT (或 http://$GATEWAY_BIND:$GATEWAY_PORT)"
+    echo -e "   • 查看日志 : su - $OPENCLAW_USER -c 'pm2 logs openclaw'"
+    echo -e "   • 管理菜单 : ~/openclaw-scripts/manager.sh"
+    echo ""
 }
 
 # ════════════════════ 主流程 ════════════════════

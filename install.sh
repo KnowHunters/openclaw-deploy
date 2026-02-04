@@ -233,10 +233,11 @@ fix_node_permissions() {
     for node_path in "${node_candidates[@]}"; do
         [ -n "$node_path" ] || continue
         if [ -f "$node_path" ]; then
-            chmod +x "$node_path"
+            # 必须给所有用户读和执行权限 (755)，否则 +x 可能不够
+            chmod 755 "$node_path"
             resolved=$(readlink -f "$node_path" 2>/dev/null || true)
             if [ -n "$resolved" ] && [ "$resolved" != "$node_path" ] && [ -f "$resolved" ]; then
-                chmod +x "$resolved"
+                chmod 755 "$resolved"
             fi
         fi
     done
@@ -245,6 +246,9 @@ fix_node_permissions() {
     if [ -d "/home/$OPENCLAW_USER/.pm2" ]; then
         chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2"
     fi
+    
+    # 清理可能残留的 root 拥有的 PM2 临时文件
+    find /tmp -name "*pm2*" -user root -delete 2>/dev/null || true
 }
 
 # ════════════════════ 系统调优 ════════════════════

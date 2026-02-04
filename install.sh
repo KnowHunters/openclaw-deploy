@@ -14,7 +14,7 @@
 set -e
 
 # ════════════════════ 全局配置 ════════════════════
-VERSION="1.0.2"
+VERSION="1.0.3"
 OPENCLAW_USER="openclaw"
 WORKSPACE_DIR="/home/$OPENCLAW_USER/openclaw-bot"
 SCRIPTS_DIR="/home/$OPENCLAW_USER/openclaw-scripts"
@@ -139,12 +139,55 @@ cleanup_trap() {
 trap cleanup_trap EXIT
 
 # ════════════════════ 参数解析 ════════════════════
-while getopts "nu" opt; do
-  case $opt in
-    n) NON_INTERACTIVE=true ;;
-    u) UPDATE_MODE=true ;;
-    *) echo "用法: $0 [-n 非交互] [-u 仅更新]"; exit 1 ;;
-  esac
+print_usage() {
+    cat <<EOF
+OpenClaw 部署脚本 v${VERSION}
+
+用法:
+  curl ... | sudo bash -s -- [选项]
+
+选项:
+  --help, -h               显示帮助
+  --fast, -f               快速模式 (跳过非关键确认)
+  --update, -u             更新模式 (保留数据)
+  --mirror <url>           使用自定义 NPM 镜像源
+  --version <tag>          安装指定版本的 OpenClaw CLI (默认: latest)
+
+示例:
+  sudo bash install.sh --fast --mirror https://registry.npmmirror.com
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help|-h)
+            print_usage
+            exit 0
+            ;;
+        --fast|-n|-f)
+            NON_INTERACTIVE=true
+            ;;
+        --update|-u)
+            UPDATE_MODE=true
+            ;;
+        --mirror)
+            if [ -n "$2" ]; then
+                export npm_config_registry="$2"
+                log_info "使用 NPM 镜像: $2"
+                shift
+            fi
+            ;;
+        --version)
+            if [ -n "$2" ]; then
+                CLI_VERSION="$2"
+                shift
+            fi
+            ;;
+        *)
+            log_warn "未知参数: $1 (已忽略)"
+            ;;
+    esac
+    shift
 done
 
 # ════════════════════ 安装确认菜单 ════════════════════
@@ -280,6 +323,31 @@ ensure_openclaw_bin_link() {
     fi
 }
 
+# 优化: 严格的 Node 版本检查
+verify_node_version() {
+    if command -v node &>/dev/null; then
+        local version=$(node -v | sed 's/v//' | cut -d. -f1)
+        if [ "$version" -lt 22 ]; then
+            log_error "检测到 Node.js v$version，但 OpenClaw 需要 Node.js v22+"
+        else
+            log_ok "Node.js 版本检查通过 ($(node -v))"
+        fi
+    fi
+}
+
+# 优化: 自动迁移与诊断
+run_doctor() {
+    if command -v openclaw &>/dev/null; then
+        echo ""
+        log_info "正在执行自动诊断与迁移..."
+        if sudo -u $OPENCLAW_USER openclaw doctor --non-interactive; then
+            log_ok "诊断与迁移完成"
+        else
+            log_warn "诊断过程中发现部分问题，建议后续手动运行 'claw doctor'"
+        fi
+    fi
+}
+
 # ════════════════════ 系统调优 ════════════════════
 
 optimize_system() {
@@ -369,6 +437,8 @@ install_dependencies() {
         run_step "安装 Node.js v$NODE_MAJOR" "curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && apt-get install -yqq nodejs"
     fi
     
+    verify_node_version
+    
     # OpenClaw CLI & PM2
 
 
@@ -378,7 +448,12 @@ install_dependencies() {
     # 确保 NPM 用户前缀已设置（避免权限问题）
     run_step "设置 NPM 前缀" "sudo -u $OPENCLAW_USER npm config set prefix '/home/$OPENCLAW_USER/.npm-global'"
     run_step "配置 NPM PATH" "if ! grep -q 'npm-global/bin' /home/$OPENCLAW_USER/.bashrc; then echo 'export PATH=/home/$OPENCLAW_USER/.npm-global/bin:\$PATH' >> /home/$OPENCLAW_USER/.bashrc; fi"
-    run_step "安装 OpenClaw CLI" "sudo -u $OPENCLAW_USER npm install -g openclaw@latest"
+    local cli_pkg="openclaw@${CLI_VERSION:-latest}"
+    if [ -n "$npm_config_registry" ]; then
+        run_step "安装 OpenClaw CLI ($cli_pkg)" "sudo -u $OPENCLAW_USER npm install -g $cli_pkg --registry=$npm_config_registry"
+    else
+        run_step "安装 OpenClaw CLI ($cli_pkg)" "sudo -u $OPENCLAW_USER npm install -g $cli_pkg"
+    fi
 
     # Linuxbrew (Homebrew) - 解决 Skill 依赖问题 (camsnap, gog 等)
     if [ ! -d "/home/linuxbrew/.linuxbrew" ]; then
@@ -597,7 +672,10 @@ main() {
         run_step "重启 Systemd 服务" "systemctl restart openclaw"
     fi
     
-    # 6. 进入配置向导
+    # 7. 执行自动诊断 (Round 2 Optimization)
+    run_doctor
+    
+    # 8. 进入配置向导
     if [ "$UPDATE_MODE" = false ] && [ "$NON_INTERACTIVE" = false ]; then
         show_completion
     else

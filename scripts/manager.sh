@@ -209,10 +209,19 @@ configure_custom_provider() {
 
 test_api_connection() {
     echo -e "\n${CYAN}⏳ 正在测试 API 连接...${NC}"
-    if run_as_user_shell "timeout 20 $CLAW_BIN agent --local --message 'Hello' >/dev/null 2>&1"; then
+    echo -e "${GRAY}(执行指令: $CLAW_BIN agent --local --message 'Hello')${NC}"
+    
+    local output
+    # 捕获输出 (stdout + stderr)
+    if output=$(run_as_user_shell "timeout 20 $CLAW_BIN agent --local --message 'Hello' 2>&1"); then
         echo -e "${GREEN}✓ 连接测试成功！${NC}"
+        echo -e "${GRAY}响应: $output${NC}"
     else
         echo -e "${RED}✗ 连接测试失败${NC}"
+        echo -e "\n${YELLOW}=== 错误详细信息 ===${NC}"
+        echo "$output"
+        echo -e "${YELLOW}====================${NC}"
+        echo -e "提示: 请检查 API Key 是否正确，或网络是否通畅 (如需代理请配置 HTTP_PROXY)"
     fi
     pause
 }

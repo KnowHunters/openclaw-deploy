@@ -532,6 +532,18 @@ show_completion() {
     echo -e "   运行指令: "
     echo -e "   ${GREEN}$HOME/openclaw-scripts/manager.sh${NC}"
     echo ""
+    
+    # 自动跳转到 Admin Panel
+    if [ "$NON_INTERACTIVE" = false ]; then
+        echo -e "${CYAN}准备自动启动管理面板...${NC}"
+        for i in {5..1}; do
+            echo -ne "\r${YELLOW}将在 $i 秒后进入 manager.sh (按 Ctrl+C 取消)...${NC}"
+            sleep 1
+        done
+        echo -e "\n${GREEN}🚀 启动管理面板!${NC}"
+        sleep 1
+        exec su - "$OPENCLAW_USER" -c "$SCRIPTS_DIR/manager.sh"
+    fi
 }
 
 # ════════════════════ 主流程 ════════════════════

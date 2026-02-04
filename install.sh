@@ -393,7 +393,7 @@ install_dependencies() {
         run_step "准备 NPM 前缀目录" "mkdir -p /home/$OPENCLAW_USER/.npm-global && chown $OPENCLAW_USER:$OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global"
         run_step "设置 NPM 前缀" "sudo -u $OPENCLAW_USER npm config set prefix '/home/$OPENCLAW_USER/.npm-global'"
         run_step "配置 NPM PATH" "if ! grep -q 'npm-global/bin' /home/$OPENCLAW_USER/.bashrc; then echo 'export PATH=/home/$OPENCLAW_USER/.npm-global/bin:\$PATH' >> /home/$OPENCLAW_USER/.bashrc; fi"
-        run_step "更新 OpenClaw CLI & PM2" "sudo -u $OPENCLAW_USER npm install -g openclaw@latest pm2@latest"
+        run_step "更新 OpenClaw CLI" "sudo -u $OPENCLAW_USER npm install -g openclaw@latest"
         return
     fi
     
@@ -439,7 +439,7 @@ install_dependencies() {
     
     verify_node_version
     
-    # OpenClaw CLI & PM2
+    # OpenClaw CLI
 
 
     # 确保 NPM 用户前缀目录存在

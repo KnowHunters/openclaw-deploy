@@ -440,7 +440,17 @@ setup_infrastructure() {
     # 配置 PM2 启动 (直接运行 openclaw 二进制)
     local PM2_BIN="/home/$OPENCLAW_USER/.npm-global/bin/pm2"
     local CLAW_BIN="/home/$OPENCLAW_USER/.npm-global/bin/openclaw"
+    local CONFIG_DIR="/home/$OPENCLAW_USER/.openclaw"
     
+    # 预生成默认配置文件 (防止服务启动失败)
+    run_step "初始化默认配置" "
+        mkdir -p $CONFIG_DIR
+        if [ ! -f $CONFIG_DIR/openclaw.json ]; then
+            echo '{\"server\":{\"host\":\"0.0.0.0\",\"port\":18789},\"models\":{\"providers\":{}}}' > $CONFIG_DIR/openclaw.json
+        fi
+        chown -R $OPENCLAW_USER:$OPENCLAW_USER $CONFIG_DIR
+    "
+
     run_step "启动并保存服务" "
         su - \"$OPENCLAW_USER\" -c \"
             cd $WORKSPACE_DIR

@@ -460,18 +460,9 @@ show_completion() {
     echo -e "   └─ 总耗时    : ${TOTAL_MIN}分 ${TOTAL_SEC}秒"
     echo ""
     
-    # 倒计时运行 onboard
-    echo -e "${YELLOW}准备运行配置向导 (openclaw onboard)...${NC}"
-    for i in {5..1}; do
-        echo -ne "\r${CYAN}将在 $i 秒后开始... (按 Ctrl+C 取消)${NC}"
-        sleep 1
-    done
-    echo ""
-    echo ""
-    
-    # 1. 运行配置向导 (使用 su - 确保加载 .bashrc 中的 brew 环境变量)
-    log_info "启动配置向导..."
-    su - "$OPENCLAW_USER" -c "openclaw onboard"
+    # 1. 跳过交互式向导 (改用 Admin Panel)
+    log_info "跳过交互式向导 (请安装后使用 manager.sh 配置)..."
+    # su - "$OPENCLAW_USER" -c "openclaw onboard"
     
     # 2. 确保服务运行并保存
     echo ""

@@ -695,26 +695,68 @@ menu_skills() {
 }
 
 
+
+quick_start_wizard() {
+    header
+    echo -e "${BOLD}🚀 快速初始化向导 (Quick Start)${NC}"
+    echo -e "${GRAY}将引导您完成核心配置，让 OpenClaw 立即进入可用状态。${NC}"
+    echo ""
+    pause
+    
+    # 1. 核心模型配置
+    configure_llm_wizard
+    
+    # 2. 知识库初始化
+    init_knowledge_base
+    
+    # 3. 人格设定 (快速版: 仅生成默认)
+    ensure_template_files
+    echo -e "\n${CYAN}→ 正在应用默认人格 (Nova)...${NC}"
+    sleep 1
+    
+    # 4. 渠道配置 (可选)
+    header
+    echo -e "${BOLD}📡 渠道接入${NC}"
+    echo "现在配置聊天平台吗? (飞书/Telegram/Discord)"
+    echo "  1) 是 (进入配置)"
+    echo "  2) 否 (跳过, 稍后配置)"
+    echo ""
+    read -p "请选择: " ch_choice
+    if [ "$ch_choice" = "1" ]; then
+        menu_channels
+    fi
+    
+    # 5. 重启服务
+    echo -e "\n${CYAN}→ 配置已完成，正在重启服务...${NC}"
+    run_as_user pm2 restart openclaw
+    
+    echo -e "\n${GREEN}🎉 初始化完成！${NC}"
+    test_api_connection
+}
+
 # ==============================================================================
 # [5] 主入口 (Main Entry)
 # ==============================================================================
 while true; do
     header
+    echo -e " ${GREEN}[0] 🚀 快速初始化向导 (Quick Start)${NC}"
+    echo -e " ----------------------------------"
     echo -e " ${GREEN}[1] 🚀 服务管理${NC}"
     echo -e " ${GREEN}[2] 📦 技能市场${NC}"
     echo -e " ${GREEN}[3] ⚙️ 配置中心${NC}  (Models, Persona, Security)"
     echo -e " ${GREEN}[4] 🧹 维护诊断${NC}  (Fix, Backup, Update)"
     echo ""
-    echo -e " [0] 退出"
+    echo -e " [q] 退出"
     echo ""
-    read -p "请选择操作 [0-4]: " main_choice
+    read -p "请选择操作: " main_choice
 
     case $main_choice in
+        0) quick_start_wizard ;;
         1) menu_service ;;
         2) menu_skills ;;
         3) menu_config ;;
         4) menu_maintenance ;;
-        0) echo "再见!"; exit 0 ;;
+        q) echo "再见!"; exit 0 ;;
         *) ;;
     esac
 done

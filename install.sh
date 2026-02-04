@@ -447,7 +447,7 @@ setup_infrastructure() {
     run_step "初始化默认配置" "
         mkdir -p $CONFIG_DIR
         if [ ! -f $CONFIG_DIR/openclaw.json ]; then
-            echo '{\"server\":{\"host\":\"0.0.0.0\",\"port\":18789},\"models\":{\"providers\":{}}}' > $CONFIG_DIR/openclaw.json
+            echo '{}' > $CONFIG_DIR/openclaw.json
         fi
         chown -R $OPENCLAW_USER:$OPENCLAW_USER $CONFIG_DIR
     "

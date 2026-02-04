@@ -217,6 +217,7 @@ ensure_user_exists() {
 }
 
 fix_node_permissions() {
+    log_info "正在检查并修复关键文件权限..."
     # 修复 Node 二进制权限 (解决 PM2 spawn EACCES)
     # 遍历常见的 Node 路径，不管 which 结果如何，确保所有可能的 binary 都有执行权限
     local node_path
@@ -538,9 +539,12 @@ main() {
         setup_infrastructure
     else
         # 更新模式下，仅重启服务
+        log_info "正在重置服务状态..."
+        
         # 必须先杀掉旧的 daemon，防止权限错乱
         pkill -u $OPENCLAW_USER -f pm2 >/dev/null 2>&1 || true
-        su - "$OPENCLAW_USER" -c "/home/$OPENCLAW_USER/.npm-global/bin/pm2 kill" >/dev/null 2>&1 || true
+        timeout 10s su - "$OPENCLAW_USER" -c "/home/$OPENCLAW_USER/.npm-global/bin/pm2 kill" >/dev/null 2>&1 || true
+        
         # 再次确保 user 拥有 .pm2 目录
         chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2" 2>/dev/null || true
         

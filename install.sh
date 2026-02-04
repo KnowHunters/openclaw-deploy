@@ -455,7 +455,7 @@ setup_infrastructure() {
         su - \"$OPENCLAW_USER\" -c \"
             cd $WORKSPACE_DIR
             $PM2_BIN delete openclaw 2>/dev/null || true
-            $PM2_BIN start $CLAW_BIN --name openclaw -- gateway
+            $PM2_BIN start \"$CLAW_BIN\" --name openclaw --interpreter none -- gateway
             $PM2_BIN save
         \"
     "
@@ -492,9 +492,7 @@ show_completion() {
     echo -e "     查看帮助 : ${GRAY}su - $OPENCLAW_USER -c '/home/$OPENCLAW_USER/.npm-global/bin/openclaw --help'${NC}"
     echo ""
     echo -e "${YELLOW}👉 下一步操作建议${NC}"
-    echo -e "   强烈建议使用管理菜单来管理一切 (含备份、更新、优化等)"
-    echo -e "   运行指令: "
-    echo -e "   ${GREEN}$SCRIPTS_DIR/manager.sh${NC}"
+    echo -e "   使用管理菜单来管理一切 (含备份、更新、优化等)"
     echo ""
     
     # 自动倒计时进入

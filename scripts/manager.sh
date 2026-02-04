@@ -545,7 +545,8 @@ configure_gateway() {
     echo -e "${YELLOW}注意: 需要重启服务才能生效${NC}"
     read -p "是否立即重启? [y/N] " restart_now
     if [[ $restart_now =~ ^[Yy]$ ]]; then
-        run_as_user "$PM2_BIN" restart openclaw
+        # 安全重启: 优先尝试 reload，失败则 restart
+        run_as_user "$PM2_BIN" reload openclaw 2>/dev/null || run_as_user "$PM2_BIN" restart openclaw
         echo -e "${GREEN}✓ 服务已重启${NC}"
     fi
     pause

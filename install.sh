@@ -14,7 +14,7 @@
 set -e
 
 # ════════════════════ 全局配置 ════════════════════
-VERSION="1.0.1"
+VERSION="1.0.2"
 OPENCLAW_USER="openclaw"
 WORKSPACE_DIR="/home/$OPENCLAW_USER/openclaw-bot"
 SCRIPTS_DIR="/home/$OPENCLAW_USER/openclaw-scripts"
@@ -242,6 +242,42 @@ fix_node_permissions() {
     done
     
 
+}
+
+# 优化: Git 配置安全检查 (防止用户本地 insteadOf 配置导致 clone 失败)
+fix_git_github_config() {
+    local github_ssh_config
+    github_ssh_config="$(git config --global --get url."git@github.com:".insteadOf 2>/dev/null || true)"
+
+    if [[ -n "$github_ssh_config" ]]; then
+        log_warn "检测到 Git 全局 GitHub 配置，可能导致 HTTPS 克隆失败"
+        log_info "正在临时禁用此配置..."
+        git config --global --unset url."git@github.com:".insteadOf 2>/dev/null || true
+        export GIT_CONFIG_BACKUP_VALUE="$github_ssh_config"
+        trap restore_git_github_config EXIT
+    fi
+}
+
+restore_git_github_config() {
+    if [[ -n "$GIT_CONFIG_BACKUP_VALUE" ]]; then
+        git config --global url."git@github.com:".insteadOf "$GIT_CONFIG_BACKUP_VALUE" 2>/dev/null || true
+        log_info "已恢复 Git 全局 GitHub 配置"
+    fi
+}
+
+ensure_openclaw_bin_link() {
+    # 确保 /usr/local/bin/openclaw 软链存在且有效
+    if ! command -v openclaw &>/dev/null; then
+        local npm_root="$(sudo -u $OPENCLAW_USER npm root -g 2>/dev/null)"
+        if [[ -f "$npm_root/openclaw/bin/openclaw" ]]; then
+             ln -sf "$npm_root/openclaw/bin/openclaw" /usr/local/bin/openclaw
+             log_ok "已修复 openclaw 命令链接"
+        elif [[ -f "$npm_root/openclaw/dist/entry.js" ]]; then
+             # Fallback logic if bin not found directly
+             ln -sf "$npm_root/openclaw/dist/entry.js" /usr/local/bin/openclaw
+             log_ok "已修复 openclaw 命令链接 (entry.js)"
+        fi
+    fi
 }
 
 # ════════════════════ 系统调优 ════════════════════
@@ -533,6 +569,7 @@ main() {
     ensure_user_exists
 
     # 2. 安装基础依赖和 CLI
+    fix_git_github_config
     install_dependencies
     
     # 3. 准备工作目录
@@ -543,6 +580,7 @@ main() {
 
     # 4.5 修复 Node 权限
     fix_node_permissions
+    ensure_openclaw_bin_link
     
     # 5. 基础设施配置 (不启动)
     if [ "$UPDATE_MODE" = false ]; then

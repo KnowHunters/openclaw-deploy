@@ -521,6 +521,36 @@ deep_diagnose() {
     edit_file_as_user "$report_file"
 }
 
+# --- 模块 G: 网关配置 (Gateway) ---
+configure_gateway() {
+    header
+    echo -e "${BOLD}🌐 网关配置 (Gateway Config)${NC}"
+    echo ""
+    
+    local port=""
+    local host=""
+    local cors=""
+    
+    prompt_input "监听端口 (Port)" "18789" port
+    prompt_input "监听地址 (Host)" "0.0.0.0" host
+    echo -e "${GRAY}提示: 允许跨域通常设为 '*' 或前端域名${NC}"
+    prompt_input "CORS 允许来源" "*" cors
+    
+    echo -e "\n${CYAN}正在更新配置...${NC}"
+    run_as_user_shell "openclaw config set server.port $port"
+    run_as_user_shell "openclaw config set server.host '$host'"
+    run_as_user_shell "openclaw config set server.cors.origin '$cors'"
+    
+    echo -e "${GREEN}✓ 配置已保存${NC}"
+    echo -e "${YELLOW}注意: 需要重启服务才能生效${NC}"
+    read -p "是否立即重启? [y/N] " restart_now
+    if [[ $restart_now =~ ^[Yy]$ ]]; then
+        run_as_user "$PM2_BIN" restart openclaw
+        echo -e "${GREEN}✓ 服务已重启${NC}"
+    fi
+    pause
+}
+
 # ==============================================================================
 # [5] 菜单视图 (Menu Views)
 # ==============================================================================
@@ -531,13 +561,14 @@ menu_config() {
         echo ""
         echo "  1) 🧠 智能模型向导 (LLM Wizard)"
         echo "  2) 📡 多渠道矩阵 (Channel Matrix)"
-        echo "  3) 🎭 人格与规则管理 (Persona)"
-        echo "  4) 🏎️ 性能调优 (Performance)"
-        echo "  5) 🛡️ 安全设设置 (Security)"
-        echo "  6) ----------------------------"
-        echo "  7) 手动编辑主配置 (JSON)"
-        echo "  8) 手动编辑环境变量 (.env)"
-        echo "  9) 测试连接"
+        echo "  3) 🌐 网关基础配置 (Port/Host/CORS)"
+        echo "  4) 🎭 人格与规则管理 (Persona)"
+        echo "  5) 🏎️ 性能调优 (Performance)"
+        echo "  6) 🛡️ 安全设设置 (Security)"
+        echo "  7) ----------------------------"
+        echo "  8) 手动编辑主配置 (JSON)"
+        echo "  9) 手动编辑环境变量 (.env)"
+        echo "  10) 测试连接"
         echo ""
         echo "  0) 返回"
         echo ""
@@ -545,12 +576,13 @@ menu_config() {
         case $choice in
             1) configure_llm_wizard ;;
             2) menu_channels ;;
-            3) menu_persona ;;
-            4) configure_performance ;;
-            5) configure_security ;;
-            7) edit_file_as_user "$CONFIG_FILE" ;;
-            8) edit_file_as_user "$ENV_FILE" ;;
-            9) test_api_connection ;;
+            3) configure_gateway ;;
+            4) menu_persona ;;
+            5) configure_performance ;;
+            6) configure_security ;;
+            8) edit_file_as_user "$CONFIG_FILE" ;;
+            9) edit_file_as_user "$ENV_FILE" ;;
+            10) test_api_connection ;;
             0) return ;;
         esac
     done

@@ -448,7 +448,26 @@ ensure_template_files() {
         echo -e "${YELLOW}Creating AGENTS.md...${NC}"
         get_template_agents | run_as_user_shell "cat > '$base_dir/AGENTS.md'"
     fi
-}
+    
+    # 强制更新配置文件中的 Workspace 路径，确保 Agent 能找到这些文件
+    run_as_user_shell "node -e \"
+        const fs = require('fs');
+        const configFile = '$CONFIG_FILE';
+        try {
+            let config = {};
+            if (fs.existsSync(configFile)) {
+                config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+            }
+            if (!config.agents) config.agents = {};
+            if (!config.agents.defaults) config.agents.defaults = {};
+            
+            // 如果尚未设置或不匹配，则更新
+            if (config.agents.defaults.workspace !== '$base_dir') {
+                config.agents.defaults.workspace = '$base_dir';
+                fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+                console.log('Updated workspace path in config.');
+            }
+        } catch (e) { console.error(e); }\""
 
 menu_persona() {
     ensure_template_files

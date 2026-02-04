@@ -554,6 +554,37 @@ configure_gateway() {
 # ==============================================================================
 # [5] 菜单视图 (Menu Views)
 # ==============================================================================
+# --- 模块 H: 官方 CLI 工具集成 ---
+official_cli_menu() {
+    while true; do
+        header
+        echo -e "${BOLD}⌨️ 官方 CLI 工具 (Native Tools)${NC}"
+        echo -e "${GRAY}直接调用官方指令。注意: 部分指令可能会覆盖现有配置。${NC}"
+        echo ""
+        echo "  1) openclaw configure   (基础配置问答)"
+        echo "  2) openclaw onboard     (全流程向导 - 慎用)"
+        echo "  3) openclaw doctor      (官方诊断)"
+        echo "  4) openclaw listing     (查看所有模型)"
+        echo ""
+        echo "  0) 返回"
+        echo ""
+        read -p "请选择: " cli_choice
+        case $cli_choice in
+            1) run_as_user_shell "openclaw configure"; pause ;;
+            2) 
+                echo -e "${RED}警告: 此操作可能会重置部分配置。确定继续吗? [y/N]${NC}"
+                read -p "> " confirm
+                if [[ $confirm =~ ^[Yy]$ ]]; then
+                    run_as_user_shell "openclaw onboard"
+                fi
+                pause ;;
+            3) run_as_user_shell "openclaw doctor"; pause ;;
+            4) run_as_user_shell "openclaw listing"; pause ;;
+            0) return ;;
+        esac
+    done
+}
+
 menu_config() {
     while true; do
         header
@@ -566,9 +597,10 @@ menu_config() {
         echo "  5) 🏎️ 性能调优 (Performance)"
         echo "  6) 🛡️ 安全设设置 (Security)"
         echo "  7) ----------------------------"
-        echo "  8) 手动编辑主配置 (JSON)"
-        echo "  9) 手动编辑环境变量 (.env)"
-        echo "  10) 测试连接"
+        echo "  8) ⌨️ 官方 CLI 工具 (Native Tools)"
+        echo "  9) 手动编辑主配置 (JSON)"
+        echo "  10) 手动编辑环境变量 (.env)"
+        echo "  11) 测试连接"
         echo ""
         echo "  0) 返回"
         echo ""
@@ -580,9 +612,10 @@ menu_config() {
             4) menu_persona ;;
             5) configure_performance ;;
             6) configure_security ;;
-            8) edit_file_as_user "$CONFIG_FILE" ;;
-            9) edit_file_as_user "$ENV_FILE" ;;
-            10) test_api_connection ;;
+            8) official_cli_menu ;;
+            9) edit_file_as_user "$CONFIG_FILE" ;;
+            10) edit_file_as_user "$ENV_FILE" ;;
+            11) test_api_connection ;;
             0) return ;;
         esac
     done

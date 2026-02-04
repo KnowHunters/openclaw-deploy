@@ -537,12 +537,18 @@ configure_gateway() {
     echo -e "${GRAY}提示: 允许跨域通常设为 '*' 或前端域名${NC}"
     prompt_input "CORS 允许来源" "*" cors
     
-    echo -e "\n${CYAN}正在更新配置...${NC}"
-    run_as_user_shell "$CLAW_BIN config set server.port $port"
-    run_as_user_shell "$CLAW_BIN config set server.host '$host'"
-    run_as_user_shell "$CLAW_BIN config set server.cors.origin '$cors'"
+    echo -e "\n${CYAN}正在更新配置 (.env)...${NC}"
     
-    echo -e "${GREEN}✓ 配置已保存${NC}"
+    # 使用 sed 更新 .env 环境变量
+    run_as_user_shell "sed -i '/export GATEWAY_PORT=/d' '$ENV_FILE' && echo 'export GATEWAY_PORT=$port' >> '$ENV_FILE'"
+    run_as_user_shell "sed -i '/export GATEWAY_BIND=/d' '$ENV_FILE' && echo 'export GATEWAY_BIND=$host' >> '$ENV_FILE'"
+    
+    # CORS 暂时只能通过 env 配置? 我们先保留环境变量设置
+    # 如果 OpenClaw 支持 SERVER_CORS_ORIGIN 这样的 env，可以直接这里设
+    # 假设 OpenClaw 优先读 env:
+    run_as_user_shell "sed -i '/export SERVER_CORS_ORIGIN=/d' '$ENV_FILE' && echo 'export SERVER_CORS_ORIGIN=\"$cors\"' >> '$ENV_FILE'"
+    
+    echo -e "${GREEN}✓ 配置已保存 (.env)${NC}"
     echo -e "${YELLOW}注意: 需要重启服务才能生效${NC}"
     read -p "是否立即重启? [y/N] " restart_now
     if [[ $restart_now =~ ^[Yy]$ ]]; then

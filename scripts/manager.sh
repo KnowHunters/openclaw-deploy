@@ -279,13 +279,24 @@ configure_llm_wizard() {
     # 构造一个简单的 curl 测试 (比 openclaw agent 更快且不依赖环境)
     # 注意: 这是一个基本测试，仅验证网络和 Key 格式
     if [ -n "$api_key" ]; then
-        local auth_header="Authorization: Bearer $api_key"
-        # 尝试列出模型或进行简单对话 (取决于 API 支持)
-        # 为了通用性，我们直接调用 openclaw agent --local
-        if run_as_user_shell "timeout 15 openclaw agent --local --model-override '$model_id' --api-override '$base_url' --key-override '$api_key' --message 'hi' >/dev/null 2>&1"; then
-             echo -e "${GREEN}✓ 连接测试成功！${NC}"
+        # 使用 curl 进行更通用的连通性测试 (支持所有 OpenAI 兼容接口)
+        # 构造简单的 Chat Completion 请求
+        local test_cmd="curl -s -o /dev/null -w '%{http_code}' -X POST $base_url/chat/completions \
+            -H 'Authorization: Bearer $api_key' \
+            -H 'Content-Type: application/json' \
+            -d '{\"model\": \"$model_id\", \"messages\": [{\"role\": \"user\", \"content\": \"hi\"}], \"max_tokens\": 5}'"
+            
+        echo -e "${GRAY}(Testing via curl...)${NC}"
+        
+        # 运行测试 (作为 user 运行)
+        local status_code
+        status_code=$(run_as_user_shell "$test_cmd")
+        
+        if [[ "$status_code" == "200" ]]; then
+             echo -e "${GREEN}✓ 连接测试成功 (HTTP 200)${NC}"
         else
-             echo -e "${RED}✗ 连接测试未通过 (可能是网络问题或 Key 无效)${NC}"
+             echo -e "${RED}✗ 连接测试失败 (HTTP $status_code)${NC}"
+             echo -e "${GRAY}可能原因: Key 无效 / 模型名称错误 / 网络不通${NC}"
              read -p "是否强制保存? [y/N] " force_save
              if [[ ! $force_save =~ ^[Yy]$ ]]; then
                  echo "已取消保存。"

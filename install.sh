@@ -233,22 +233,15 @@ fix_node_permissions() {
     for node_path in "${node_candidates[@]}"; do
         [ -n "$node_path" ] || continue
         if [ -f "$node_path" ]; then
-            # 必须给所有用户读和执行权限 (755)，否则 +x 可能不够
-            chmod 755 "$node_path"
+            chmod +x "$node_path"
             resolved=$(readlink -f "$node_path" 2>/dev/null || true)
             if [ -n "$resolved" ] && [ "$resolved" != "$node_path" ] && [ -f "$resolved" ]; then
-                chmod 755 "$resolved"
+                chmod +x "$resolved"
             fi
         fi
     done
     
-    # 同样修复 pm2 目录权限 (防止 Daemon 启动失败)
-    if [ -d "/home/$OPENCLAW_USER/.pm2" ]; then
-        chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2"
-    fi
-    
-    # 清理可能残留的 root 拥有的 PM2 临时文件
-    find /tmp -name "*pm2*" -user root -delete 2>/dev/null || true
+    done
 }
 
 # ════════════════════ 系统调优 ════════════════════
@@ -349,11 +342,7 @@ install_dependencies() {
     # 确保 NPM 用户前缀已设置（避免权限问题）
     run_step "设置 NPM 前缀" "sudo -u $OPENCLAW_USER npm config set prefix '/home/$OPENCLAW_USER/.npm-global'"
     run_step "配置 NPM PATH" "if ! grep -q 'npm-global/bin' /home/$OPENCLAW_USER/.bashrc; then echo 'export PATH=/home/$OPENCLAW_USER/.npm-global/bin:\$PATH' >> /home/$OPENCLAW_USER/.bashrc; fi"
-    run_step "安装 OpenClaw CLI & PM2" "sudo -u $OPENCLAW_USER npm install -g openclaw@latest pm2@latest"
-    
-    # PM2 日志轮转
-    sudo -u $OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global/bin/pm2 install pm2-logrotate >/dev/null 2>&1 || true
-    sudo -u $OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global/bin/pm2 set pm2-logrotate:max_size 10M >/dev/null 2>&1 || true
+    run_step "安装 OpenClaw CLI" "sudo -u $OPENCLAW_USER npm install -g openclaw@latest"
 
     # Linuxbrew (Homebrew) - 解决 Skill 依赖问题 (camsnap, gog 等)
     if [ ! -d "/home/linuxbrew/.linuxbrew" ]; then
@@ -431,9 +420,9 @@ install_monitoring_scripts() {
 
     # 创建全局快捷指令 (openclaw -> npm binary)
     # 注意: 这里使用具体路径，因为 PATH 可能未包含 npm bin
+    # 注意: 这里使用具体路径，因为 PATH 可能未包含 npm bin
     ln -sf "/home/$OPENCLAW_USER/.npm-global/bin/openclaw" /usr/local/bin/openclaw
-    ln -sf "/home/$OPENCLAW_USER/.npm-global/bin/pm2" /usr/local/bin/pm2
-    log_ok "已创建全局指令: openclaw, pm2"
+    log_ok "已创建全局指令: openclaw"
     
     # 配置 Cron 任务 (日志清理)
     run_step "配置日志自动清理" "(crontab -l 2>/dev/null | grep -v 'log-cleanup.sh'; echo '0 2 * * * $SCRIPTS_DIR/log-cleanup.sh >> $WORKSPACE_DIR/logs/cleanup.log 2>&1') | crontab -"
@@ -453,8 +442,8 @@ setup_infrastructure() {
         chmod 600 "$WORKSPACE_DIR/.env"
     fi
 
-    # 配置 PM2 启动 (直接运行 openclaw 二进制)
-    local PM2_BIN="/home/$OPENCLAW_USER/.npm-global/bin/pm2"
+    # 配置 Systemd 服务
+    local SYSTEMD_FILE="/etc/systemd/system/openclaw.service"
     local CLAW_BIN="/home/$OPENCLAW_USER/.npm-global/bin/openclaw"
     local CONFIG_DIR="/home/$OPENCLAW_USER/.openclaw"
     
@@ -467,14 +456,31 @@ setup_infrastructure() {
         chown -R $OPENCLAW_USER:$OPENCLAW_USER $CONFIG_DIR
     "
 
-    run_step "启动并保存服务" "
-        su - \"$OPENCLAW_USER\" -c \"
-            cd $WORKSPACE_DIR
-            $PM2_BIN delete openclaw 2>/dev/null || true
-            $PM2_BIN start \"$CLAW_BIN\" --name openclaw --interpreter none -- gateway
-            $PM2_BIN save
-        \"
+    run_step "注册 Systemd 服务" "
+        cat > $SYSTEMD_FILE <<EOF
+[Unit]
+Description=OpenClaw AI Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=$OPENCLAW_USER
+Group=$OPENCLAW_USER
+WorkingDirectory=$WORKSPACE_DIR
+Environment=PATH=/home/$OPENCLAW_USER/.npm-global/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
+ExecStart=$CLAW_BIN gateway
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        systemctl daemon-reload
+        systemctl enable openclaw
     "
+    
+    run_step "启动服务" "systemctl restart openclaw"
     
     log_ok "基础设施配置完成"
 }
@@ -545,14 +551,12 @@ main() {
         # 更新模式下，仅重启服务
         log_info "正在重置服务状态..."
         
-        # 必须先杀掉旧的 daemon，防止权限错乱
-        pkill -u $OPENCLAW_USER -f pm2 >/dev/null 2>&1 || true
-        timeout 10s su - "$OPENCLAW_USER" -c "/home/$OPENCLAW_USER/.npm-global/bin/pm2 kill" >/dev/null 2>&1 || true
+        # 尝试清理旧的 PM2 进程 (如果从未迁移过)
+        if command -v pm2 &>/dev/null; then
+             pkill -u $OPENCLAW_USER -f pm2 >/dev/null 2>&1 || true
+        fi
         
-        # 再次确保 user 拥有 .pm2 目录
-        chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2" 2>/dev/null || true
-        
-        run_step "重启服务" "sudo -u $OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global/bin/pm2 restart all || sudo -u $OPENCLAW_USER /home/$OPENCLAW_USER/.npm-global/bin/pm2 start openclaw"
+        run_step "重启 Systemd 服务" "systemctl restart openclaw"
     fi
     
     # 6. 进入配置向导

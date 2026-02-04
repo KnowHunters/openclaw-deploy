@@ -468,6 +468,7 @@ ensure_template_files() {
                 console.log('Updated workspace path in config.');
             }
         } catch (e) { console.error(e); }\""
+}
 
 menu_persona() {
     ensure_template_files

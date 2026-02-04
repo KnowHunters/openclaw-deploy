@@ -14,6 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="/home/$OPENCLAW_USER/.openclaw/openclaw.json"
 ENV_FILE="$WORKSPACE_DIR/.env"
 PM2_BIN="/home/$OPENCLAW_USER/.npm-global/bin/pm2"
+CLAW_BIN="/home/$OPENCLAW_USER/.npm-global/bin/openclaw"
 
 # 颜色定义
 CYAN='\033[0;36m'
@@ -208,7 +209,7 @@ configure_custom_provider() {
 
 test_api_connection() {
     echo -e "\n${CYAN}⏳ 正在测试 API 连接...${NC}"
-    if run_as_user_shell "timeout 20 openclaw agent --local --message 'Hello' >/dev/null 2>&1"; then
+    if run_as_user_shell "timeout 20 $CLAW_BIN agent --local --message 'Hello' >/dev/null 2>&1"; then
         echo -e "${GREEN}✓ 连接测试成功！${NC}"
     else
         echo -e "${RED}✗ 连接测试失败${NC}"
@@ -290,7 +291,7 @@ configure_llm_wizard() {
     configure_custom_provider "$provider_id" "$base_url" "$api_key" "$model_id"
     
     # 设置为当前模型
-    run_as_user_shell "openclaw models set $provider_id/$model_id"
+    run_as_user_shell "$CLAW_BIN models set $provider_id/$model_id"
     
     echo -e "${GREEN}✓ 配置已完成！当前模型: $provider_id/$model_id${NC}"
     pause
@@ -305,9 +306,9 @@ configure_feishu() {
     echo ""
     
     # 1. 安装检查
-    if ! openclaw plugins list 2>/dev/null | grep -q "feishu"; then
+    if ! run_as_user_shell "$CLAW_BIN plugins list 2>/dev/null | grep -q \"feishu\""; then
         echo -e "${YELLOW}插件未安装，正在安装...${NC}"
-        run_as_user_shell "openclaw plugins install @m1heng-clawd/feishu"
+        run_as_user_shell "$CLAW_BIN plugins install @m1heng-clawd/feishu"
         echo -e "${GREEN}✓ 插件安装完成${NC}"
     else
         echo -e "${GREEN}✓ 插件已安装${NC}"
@@ -331,10 +332,10 @@ configure_feishu() {
     if [ -n "$app_id" ] && [ -n "$app_secret" ]; then
         echo -e "\n${CYAN}正在写入配置...${NC}"
         # 写入 Config (官方推荐方式)
-        run_as_user_shell "openclaw config set channels.feishu.appId '$app_id'"
-        run_as_user_shell "openclaw config set channels.feishu.appSecret '$app_secret'"
-        run_as_user_shell "openclaw config set channels.feishu.enabled true"
-        [ -n "$encrypt_key" ] && run_as_user_shell "openclaw config set channels.feishu.encryptKey '$encrypt_key'"
+        run_as_user_shell "$CLAW_BIN config set channels.feishu.appId '$app_id'"
+        run_as_user_shell "$CLAW_BIN config set channels.feishu.appSecret '$app_secret'"
+        run_as_user_shell "$CLAW_BIN config set channels.feishu.enabled true"
+        [ -n "$encrypt_key" ] && run_as_user_shell "$CLAW_BIN config set channels.feishu.encryptKey '$encrypt_key'"
         
         echo -e "${GREEN}✓ 配置已保存${NC}"
         echo -e "${YELLOW}提示: 请确保在飞书后台配置了事件订阅 (im.message.receive_v1)${NC}"
@@ -468,8 +469,8 @@ configure_performance() {
     prompt_input "最大上下文 Tokens" "80000" max_tokens
     
     echo -e "\n${CYAN}正在更新 session 配置...${NC}"
-    run_as_user_shell "openclaw config set session.maxTurns $max_turns"
-    run_as_user_shell "openclaw config set session.maxContextTokens $max_tokens"
+    run_as_user_shell "$CLAW_BIN config set session.maxTurns $max_turns"
+    run_as_user_shell "$CLAW_BIN config set session.maxContextTokens $max_tokens"
     echo -e "${GREEN}✓ 已保存${NC}"; pause
 }
 
@@ -512,7 +513,7 @@ deep_diagnose() {
     run_as_user_shell "node -v >> '$report_file'"
     run_as_user_shell "echo '--- Port 18789 Check ---' >> '$report_file'"
     run_as_user_shell "netstat -tuln | grep 18789 >> '$report_file' 2>&1 || echo 'Port 18789 not listening' >> '$report_file'"
-    run_as_user_shell "openclaw doctor >> '$report_file' 2>&1"
+    run_as_user_shell "$CLAW_BIN doctor >> '$report_file' 2>&1"
     run_as_user_shell "$PM2_BIN status >> '$report_file' 2>&1"
     run_as_user_shell "df -h >> '$report_file' 2>&1"
     run_as_user_shell "free -h >> '$report_file' 2>&1"
@@ -537,9 +538,9 @@ configure_gateway() {
     prompt_input "CORS 允许来源" "*" cors
     
     echo -e "\n${CYAN}正在更新配置...${NC}"
-    run_as_user_shell "openclaw config set server.port $port"
-    run_as_user_shell "openclaw config set server.host '$host'"
-    run_as_user_shell "openclaw config set server.cors.origin '$cors'"
+    run_as_user_shell "$CLAW_BIN config set server.port $port"
+    run_as_user_shell "$CLAW_BIN config set server.host '$host'"
+    run_as_user_shell "$CLAW_BIN config set server.cors.origin '$cors'"
     
     echo -e "${GREEN}✓ 配置已保存${NC}"
     echo -e "${YELLOW}注意: 需要重启服务才能生效${NC}"
@@ -571,16 +572,16 @@ official_cli_menu() {
         echo ""
         read -p "请选择: " cli_choice
         case $cli_choice in
-            1) run_as_user_shell "openclaw configure"; pause ;;
+            1) run_as_user_shell "$CLAW_BIN configure"; pause ;;
             2) 
                 echo -e "${RED}警告: 此操作可能会重置部分配置。确定继续吗? [y/N]${NC}"
                 read -p "> " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
-                    run_as_user_shell "openclaw onboard"
+                    run_as_user_shell "$CLAW_BIN onboard"
                 fi
                 pause ;;
-            3) run_as_user_shell "openclaw doctor"; pause ;;
-            4) run_as_user_shell "openclaw listing"; pause ;;
+            3) run_as_user_shell "$CLAW_BIN doctor"; pause ;;
+            4) run_as_user_shell "$CLAW_BIN listing"; pause ;;
             0) return ;;
         esac
     done
@@ -603,12 +604,12 @@ configure_logging() {
         read -p "> " level_choice
         local level="info"
         [ "$level_choice" = "2" ] && level="debug"
-        run_as_user_shell "openclaw config set logging.consoleLevel $level"
+        run_as_user_shell "$CLAW_BIN config set logging.consoleLevel $level"
         echo -e "${GREEN}✓ 已设置为 $level${NC}"
     elif [ "$log_choice" = "2" ]; then
         local log_path="$WORKSPACE_DIR/logs/openclaw.log"
         run_as_user_shell "mkdir -p '$WORKSPACE_DIR/logs'"
-        run_as_user_shell "openclaw config set logging.file '$log_path'"
+        run_as_user_shell "$CLAW_BIN config set logging.file '$log_path'"
         echo -e "${GREEN}✓ 日志路径已锁定: $log_path${NC}"
     fi
     pause
@@ -629,14 +630,14 @@ configure_hooks() {
     if [[ $enable_hook =~ ^[Yy]$ ]]; then
         prompt_input "设置 Token" "$token" final_token
         
-        run_as_user_shell "openclaw config set hooks.enabled true"
-        run_as_user_shell "openclaw config set hooks.token '$final_token'"
+        run_as_user_shell "$CLAW_BIN config set hooks.enabled true"
+        run_as_user_shell "$CLAW_BIN config set hooks.token '$final_token'"
         
         echo -e "\n${GREEN}✓ Webhooks 已启用${NC}"
         echo -e "调用地址: http://<IP>:$GATEWAY_PORT/hooks"
         echo -e "鉴权头  : Authorization: Bearer $final_token"
     else
-        run_as_user_shell "openclaw config set hooks.enabled false"
+        run_as_user_shell "$CLAW_BIN config set hooks.enabled false"
         echo -e "${YELLOW}已禁用 Webhooks${NC}"
     fi
     pause
@@ -651,10 +652,10 @@ configure_browser() {
     echo "  2) 禁用 (Disable - 节省内存)"
     read -p "请选择: " choice
     if [ "$choice" = "1" ]; then
-        run_as_user_shell "openclaw config set browser.enabled true"
+        run_as_user_shell "$CLAW_BIN config set browser.enabled true"
         echo -e "${GREEN}✓ 已启用${NC}"
     elif [ "$choice" = "2" ]; then
-        run_as_user_shell "openclaw config set browser.enabled false"
+        run_as_user_shell "$CLAW_BIN config set browser.enabled false"
         echo -e "${YELLOW}✓ 已禁用${NC}"
     fi
     pause
@@ -669,8 +670,8 @@ configure_ui() {
     prompt_input "助手名称 (Name)" "OpenClaw" name
     prompt_input "头像 (Emoji or URL)" "🤖" avatar
     
-    run_as_user_shell "openclaw config set ui.assistant.name '$name'"
-    run_as_user_shell "openclaw config set ui.assistant.avatar '$avatar'"
+    run_as_user_shell "$CLAW_BIN config set ui.assistant.name '$name'"
+    run_as_user_shell "$CLAW_BIN config set ui.assistant.avatar '$avatar'"
     echo -e "${GREEN}✓ 设置已保存${NC}"; pause
 }
 
@@ -780,7 +781,7 @@ menu_service() {
         echo ""
         read -p "请选择: " choice
         case $choice in
-            1) run_as_user_shell "$PM2_BIN start openclaw || (cd $WORKSPACE_DIR && $PM2_BIN start openclaw -- gateway)"; pause ;;
+            1) run_as_user_shell "$PM2_BIN start openclaw || (cd $WORKSPACE_DIR && $PM2_BIN start \"$CLAW_BIN\" --name openclaw --interpreter none -- gateway)"; pause ;;
             2) run_as_user "$PM2_BIN" stop openclaw; pause ;;
             3) run_as_user "$PM2_BIN" restart openclaw; pause ;;
             4) run_as_user "$PM2_BIN" status; pause ;;

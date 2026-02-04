@@ -585,6 +585,117 @@ official_cli_menu() {
     done
 }
 
+# --- 模块 I: 高级配置 (Advanced) ---
+configure_logging() {
+    header
+    echo -e "${BOLD}📜 日志配置 (Logging)${NC}"
+    echo ""
+    echo "  1) 设置日志级别 (Info/Debug)"
+    echo "  2) 启用持久化日志 (保存到 workspace/logs)"
+    echo ""
+    read -p "请选择: " log_choice
+    
+    if [ "$log_choice" = "1" ]; then
+        echo -e "\n请选择控制台输出级别:"
+        echo "  1) Info  (默认 - 仅关键信息)"
+        echo "  2) Debug (详细 - 用于排错)"
+        read -p "> " level_choice
+        local level="info"
+        [ "$level_choice" = "2" ] && level="debug"
+        run_as_user_shell "openclaw config set logging.consoleLevel $level"
+        echo -e "${GREEN}✓ 已设置为 $level${NC}"
+    elif [ "$log_choice" = "2" ]; then
+        local log_path="$WORKSPACE_DIR/logs/openclaw.log"
+        run_as_user_shell "mkdir -p '$WORKSPACE_DIR/logs'"
+        run_as_user_shell "openclaw config set logging.file '$log_path'"
+        echo -e "${GREEN}✓ 日志路径已锁定: $log_path${NC}"
+    fi
+    pause
+}
+
+configure_hooks() {
+    header
+    echo -e "${BOLD}🪝 Webhook 集成${NC}"
+    echo -e "${GRAY}允许外部系统通过 HTTP 调用 OpenClaw Agent。${NC}"
+    echo ""
+    
+    local token=$(openssl rand -hex 16)
+    echo -e "启用 Webhooks 将暴露 /hooks 接口。"
+    echo -e "推荐 Token: ${CYAN}$token${NC}"
+    
+    echo ""
+    read -p "是否启用? [y/N] " enable_hook
+    if [[ $enable_hook =~ ^[Yy]$ ]]; then
+        prompt_input "设置 Token" "$token" final_token
+        
+        run_as_user_shell "openclaw config set hooks.enabled true"
+        run_as_user_shell "openclaw config set hooks.token '$final_token'"
+        
+        echo -e "\n${GREEN}✓ Webhooks 已启用${NC}"
+        echo -e "调用地址: http://<IP>:$GATEWAY_PORT/hooks"
+        echo -e "鉴权头  : Authorization: Bearer $final_token"
+    else
+        run_as_user_shell "openclaw config set hooks.enabled false"
+        echo -e "${YELLOW}已禁用 Webhooks${NC}"
+    fi
+    pause
+}
+
+configure_browser() {
+    header
+    echo -e "${BOLD}🌍 内置浏览器 (Managed Browser)${NC}"
+    echo -e "${GRAY}用于爬取网页和运行前端自动化任务。耗内存。${NC}"
+    echo ""
+    echo "  1) 启用 (Enable)"
+    echo "  2) 禁用 (Disable - 节省内存)"
+    read -p "请选择: " choice
+    if [ "$choice" = "1" ]; then
+        run_as_user_shell "openclaw config set browser.enabled true"
+        echo -e "${GREEN}✓ 已启用${NC}"
+    elif [ "$choice" = "2" ]; then
+        run_as_user_shell "openclaw config set browser.enabled false"
+        echo -e "${YELLOW}✓ 已禁用${NC}"
+    fi
+    pause
+}
+
+configure_ui() {
+    header
+    echo -e "${BOLD}🎨 界面个性化 (UI Appearance)${NC}"
+    echo ""
+    local name=""
+    local avatar=""
+    prompt_input "助手名称 (Name)" "OpenClaw" name
+    prompt_input "头像 (Emoji or URL)" "🤖" avatar
+    
+    run_as_user_shell "openclaw config set ui.assistant.name '$name'"
+    run_as_user_shell "openclaw config set ui.assistant.avatar '$avatar'"
+    echo -e "${GREEN}✓ 设置已保存${NC}"; pause
+}
+
+menu_advanced() {
+    while true; do
+        header
+        echo -e "${BOLD}🚀 高级配置 (Advanced)${NC}"
+        echo ""
+        echo "  1) 📜 日志管理 (Logging)"
+        echo "  2) 🪝 Webhooks 集成"
+        echo "  3) 🌍 内置浏览器 (Browser)"
+        echo "  4) 🎨 界面个性化 (UI)"
+        echo ""
+        echo "  0) 返回"
+        echo ""
+        read -p "请选择: " choice
+        case $choice in
+            1) configure_logging ;;
+            2) configure_hooks ;;
+            3) configure_browser ;;
+            4) configure_ui ;;
+            0) return ;;
+        esac
+    done
+}
+
 menu_config() {
     while true; do
         header
@@ -596,11 +707,12 @@ menu_config() {
         echo "  4) 🎭 人格与规则管理 (Persona)"
         echo "  5) 🏎️ 性能调优 (Performance)"
         echo "  6) 🛡️ 安全设设置 (Security)"
-        echo "  7) ----------------------------"
-        echo "  8) ⌨️ 官方 CLI 工具 (Native Tools)"
-        echo "  9) 手动编辑主配置 (JSON)"
-        echo "  10) 手动编辑环境变量 (.env)"
-        echo "  11) 测试连接"
+        echo "  7) 🚀 高级配置 (Logging, Hooks, Browser...)"
+        echo "  8) ----------------------------"
+        echo "  9) ⌨️ 官方 CLI 工具 (Native Tools)"
+        echo "  10) 手动编辑主配置 (JSON)"
+        echo "  11) 手动编辑环境变量 (.env)"
+        echo "  12) 测试连接"
         echo ""
         echo "  0) 返回"
         echo ""
@@ -612,10 +724,11 @@ menu_config() {
             4) menu_persona ;;
             5) configure_performance ;;
             6) configure_security ;;
-            8) official_cli_menu ;;
-            9) edit_file_as_user "$CONFIG_FILE" ;;
-            10) edit_file_as_user "$ENV_FILE" ;;
-            11) test_api_connection ;;
+            7) menu_advanced ;;
+            9) official_cli_menu ;;
+            10) edit_file_as_user "$CONFIG_FILE" ;;
+            11) edit_file_as_user "$ENV_FILE" ;;
+            12) test_api_connection ;;
             0) return ;;
         esac
     done

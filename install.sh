@@ -257,7 +257,7 @@ install_dependencies() {
     echo -e "${GRAY}═══════════════════════════════════════════════════════════${NC}"
     
     if [ "$UPDATE_MODE" = true ]; then
-        run_step "更新 OpenClaw CLI & PM2" "npm install -g @openclaw/cli@latest pm2@latest"
+        run_step "更新 OpenClaw CLI & PM2" "npm install -g openclaw@latest pm2@latest"
         return
     fi
     

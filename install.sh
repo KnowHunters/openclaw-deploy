@@ -420,10 +420,16 @@ install_monitoring_scripts() {
         chown "$OPENCLAW_USER:$OPENCLAW_USER" "$SCRIPTS_DIR/$script"
     done
     
-    # 创建全局快捷指令
+    # 创建全局快捷指令 (claw -> manager)
     ln -sf "$SCRIPTS_DIR/manager.sh" /usr/local/bin/claw
     chmod +x /usr/local/bin/claw
     log_ok "已创建全局指令: claw"
+
+    # 创建全局快捷指令 (openclaw -> npm binary)
+    # 注意: 这里使用具体路径，因为 PATH 可能未包含 npm bin
+    ln -sf "/home/$OPENCLAW_USER/.npm-global/bin/openclaw" /usr/local/bin/openclaw
+    ln -sf "/home/$OPENCLAW_USER/.npm-global/bin/pm2" /usr/local/bin/pm2
+    log_ok "已创建全局指令: openclaw, pm2"
     
     # 配置 Cron 任务 (日志清理)
     run_step "配置日志自动清理" "(crontab -l 2>/dev/null | grep -v 'log-cleanup.sh'; echo '0 2 * * * $SCRIPTS_DIR/log-cleanup.sh >> $WORKSPACE_DIR/logs/cleanup.log 2>&1') | crontab -"

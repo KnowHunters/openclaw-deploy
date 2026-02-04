@@ -287,7 +287,120 @@ configure_llm_wizard() {
     pause
 }
 
-# --- 模块 C: 人格与模板 ---
+
+# --- 模块 C: 多渠道连接 (Channel Matrix) ---
+configure_feishu() {
+    header
+    echo -e "${BOLD}🐦 飞书/Lark (Feishu Connector)${NC}"
+    echo -e "${GRAY}基于 @m1heng-clawd/feishu 插件${NC}"
+    echo ""
+    
+    # 1. 安装检查
+    if ! openclaw plugins list 2>/dev/null | grep -q "feishu"; then
+        echo -e "${YELLOW}插件未安装，正在安装...${NC}"
+        run_as_user_shell "openclaw plugins install @m1heng-clawd/feishu"
+        echo -e "${GREEN}✓ 插件安装完成${NC}"
+    else
+        echo -e "${GREEN}✓ 插件已安装${NC}"
+    fi
+    
+    echo ""
+    echo "请准备好来自 [飞书开放平台] 的凭证:"
+    echo "1. App ID"
+    echo "2. App Secret"
+    echo "3. 确保已开启 '长连接' 事件订阅"
+    echo ""
+    
+    local app_id=""
+    local app_secret=""
+    local encrypt_key=""
+    
+    prompt_input "App ID" "" app_id
+    prompt_input "App Secret" "" app_secret
+    prompt_input "Encrypt Key (可选)" "" encrypt_key
+    
+    if [ -n "$app_id" ] && [ -n "$app_secret" ]; then
+        echo -e "\n${CYAN}正在写入配置...${NC}"
+        # 写入 Config (官方推荐方式)
+        run_as_user_shell "openclaw config set channels.feishu.appId '$app_id'"
+        run_as_user_shell "openclaw config set channels.feishu.appSecret '$app_secret'"
+        run_as_user_shell "openclaw config set channels.feishu.enabled true"
+        [ -n "$encrypt_key" ] && run_as_user_shell "openclaw config set channels.feishu.encryptKey '$encrypt_key'"
+        
+        echo -e "${GREEN}✓ 配置已保存${NC}"
+        echo -e "${YELLOW}提示: 请确保在飞书后台配置了事件订阅 (im.message.receive_v1)${NC}"
+    fi
+    pause
+}
+
+configure_telegram() {
+    header
+    echo -e "${BOLD}✈️ Telegram Connector${NC}"
+    echo ""
+    
+    # 1. 安装检查
+    if [ ! -d "$WORKSPACE_DIR/skills/telegram" ]; then
+        echo -e "${YELLOW}正在安装 Telegram 技能...${NC}"
+        run_as_user_shell "npx -y clawhub@latest install telegram"
+    fi
+    
+    echo ""
+    local token=""
+    prompt_input "Bot Token" "" token
+    
+    if [ -n "$token" ]; then
+        echo -e "\n${CYAN}正在写入 .env ...${NC}"
+        run_as_user_shell "sed -i '/export TELEGRAM_BOT_TOKEN=/d' '$ENV_FILE' && echo 'export TELEGRAM_BOT_TOKEN=$token' >> '$ENV_FILE'"
+        echo -e "${GREEN}✓ Token 已保存${NC}"
+    fi
+    pause
+}
+
+configure_discord() {
+    header
+    echo -e "${BOLD}🎮 Discord Connector${NC}"
+    echo ""
+    
+    # 1. 安装检查
+    if [ ! -d "$WORKSPACE_DIR/skills/discord" ]; then
+        echo -e "${YELLOW}正在安装 Discord 技能...${NC}"
+        run_as_user_shell "npx -y clawhub@latest install discord"
+    fi
+    
+    echo ""
+    local token=""
+    prompt_input "Bot Token" "" token
+    
+    if [ -n "$token" ]; then
+        echo -e "\n${CYAN}正在写入 .env ...${NC}"
+        run_as_user_shell "sed -i '/export DISCORD_BOT_TOKEN=/d' '$ENV_FILE' && echo 'export DISCORD_BOT_TOKEN=$token' >> '$ENV_FILE'"
+        echo -e "${GREEN}✓ Token 已保存${NC}"
+    fi
+    pause
+}
+
+menu_channels() {
+    while true; do
+        header
+        echo -e "${BOLD}📡 多渠道矩阵 (Channel Matrix)${NC}"
+        echo ""
+        echo "  1) 🐦 飞书/Lark (Feishu)"
+        echo "  2) ✈️ Telegram"
+        echo "  3) 🎮 Discord"
+        echo ""
+        echo "  0) 返回"
+        echo ""
+        read -p "请选择: " choice
+        case $choice in
+            1) configure_feishu ;;
+            2) configure_telegram ;;
+            3) configure_discord ;;
+            0) return ;;
+        esac
+    done
+}
+
+# --- 模块 D: 人格与模板 ---
 ensure_template_files() {
     local base_dir="$WORKSPACE_DIR"
     run_as_user_shell "mkdir -p '$base_dir'"
@@ -404,25 +517,27 @@ menu_config() {
         echo -e "${BOLD}⚙️ 配置中心${NC}"
         echo ""
         echo "  1) 🧠 智能模型向导 (LLM Wizard)"
-        echo "  2) 🎭 人格与规则管理 (Persona)"
-        echo "  3) 🏎️ 性能调优 (Performance)"
-        echo "  4) 🛡️ 安全设设置 (Security)"
-        echo "  5) ----------------------------"
-        echo "  6) 手动编辑主配置 (JSON)"
-        echo "  7) 手动编辑环境变量 (.env)"
-        echo "  8) 测试连接"
+        echo "  2) 📡 多渠道矩阵 (Channel Matrix)"
+        echo "  3) 🎭 人格与规则管理 (Persona)"
+        echo "  4) 🏎️ 性能调优 (Performance)"
+        echo "  5) 🛡️ 安全设设置 (Security)"
+        echo "  6) ----------------------------"
+        echo "  7) 手动编辑主配置 (JSON)"
+        echo "  8) 手动编辑环境变量 (.env)"
+        echo "  9) 测试连接"
         echo ""
         echo "  0) 返回"
         echo ""
         read -p "请选择: " choice
         case $choice in
             1) configure_llm_wizard ;;
-            2) menu_persona ;;
-            3) configure_performance ;;
-            4) configure_security ;;
-            6) edit_file_as_user "$CONFIG_FILE" ;;
-            7) edit_file_as_user "$ENV_FILE" ;;
-            8) test_api_connection ;;
+            2) menu_channels ;;
+            3) menu_persona ;;
+            4) configure_performance ;;
+            5) configure_security ;;
+            7) edit_file_as_user "$CONFIG_FILE" ;;
+            8) edit_file_as_user "$ENV_FILE" ;;
+            9) test_api_connection ;;
             0) return ;;
         esac
     done

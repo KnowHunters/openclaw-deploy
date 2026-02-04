@@ -209,11 +209,11 @@ configure_custom_provider() {
 
 test_api_connection() {
     echo -e "\n${CYAN}⏳ 正在测试 API 连接...${NC}"
-    echo -e "${GRAY}(执行指令: $CLAW_BIN agent --local --message 'Hello')${NC}"
+    echo -e "${GRAY}(执行指令: $CLAW_BIN agent --local --agent main --message 'Hello')${NC}"
     
     local output
     # 捕获输出 (stdout + stderr)
-    if output=$(run_as_user_shell "timeout 20 $CLAW_BIN agent --local --message 'Hello' 2>&1"); then
+    if output=$(run_as_user_shell "timeout 20 $CLAW_BIN agent --local --agent main --message 'Hello' 2>&1"); then
         echo -e "${GREEN}✓ 连接测试成功！${NC}"
         echo -e "${GRAY}响应: $output${NC}"
     else

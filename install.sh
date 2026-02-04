@@ -437,84 +437,18 @@ setup_infrastructure() {
         chmod 600 "$WORKSPACE_DIR/.env"
     fi
 
-    # 创建 PM2 启动脚本
-    run_step "创建启动脚本" "
-cat > $WORKSPACE_DIR/start.sh << 'SCRIPT'
-#!/bin/bash
-cd /home/openclaw/openclaw-bot
-# 加载环境变量
-set -a
-export PATH=/home/openclaw/.npm-global/bin:$PATH
-# 如果 .env 存在则加载
-[ -f .env ] && source .env
-set +a
-# 启动 openclaw gateway
-exec openclaw gateway
-SCRIPT
-chmod +x $WORKSPACE_DIR/start.sh
-chown $OPENCLAW_USER:$OPENCLAW_USER $WORKSPACE_DIR/start.sh
-"
+    # 配置 PM2 启动 (直接运行 openclaw 二进制)
+    local PM2_BIN="/home/$OPENCLAW_USER/.npm-global/bin/pm2"
+    local CLAW_BIN="/home/$OPENCLAW_USER/.npm-global/bin/openclaw"
     
-    # 配置 PM2 开机自启
-    run_step "配置 PM2 开机自启" "env PATH=/home/$OPENCLAW_USER/.npm-global/bin:\$PATH /home/$OPENCLAW_USER/.npm-global/bin/pm2 startup systemd -u $OPENCLAW_USER --hp /home/$OPENCLAW_USER"
-    
-    # 安装 CLI 自动补全
-    sudo -u "$OPENCLAW_USER" /home/$OPENCLAW_USER/.npm-global/bin/openclaw completion install 2>/dev/null || true
-    
-    # 防火墙
-    if command -v ufw &>/dev/null && [ "$GATEWAY_BIND" != "127.0.0.1" ]; then
-        run_step "配置防火墙" "ufw allow ssh && ufw allow $GATEWAY_PORT/tcp"
-    fi
-    
-    log_ok "基础设施配置完成"
-}
-
-# ════════════════════ 完成配置 (自动向导) ════════════════════
-show_completion() {
-    echo ""
-    echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║                                                               ║${NC}"
-    echo -e "${GREEN}║     🎉  OpenClaw 环境部署完成 !                               ║${NC}"
-    echo -e "${GREEN}║                                                               ║${NC}"
-    echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    # 计算总耗时
-    local END_TIME=$(date +%s)
-    local TOTAL_DURATION=$((END_TIME - START_TIME))
-    local TOTAL_MIN=$((TOTAL_DURATION / 60))
-    local TOTAL_SEC=$((TOTAL_DURATION % 60))
-
-    echo -e "${BOLD}📋 部署信息${NC}"
-    echo -e "   ├─ 工作目录  : $WORKSPACE_DIR"
-    echo -e "   ├─ 运行用户  : $OPENCLAW_USER"
-    echo -e "   ├─ 网关地址  : http://$GATEWAY_BIND:$GATEWAY_PORT"
-    echo -e "   └─ 总耗时    : ${TOTAL_MIN}分 ${TOTAL_SEC}秒"
-    echo ""
-    
-    # 1. 跳过交互式向导 (改用 Admin Panel)
-    log_info "跳过交互式向导 (请安装后使用 manager.sh 配置)..."
-    # su - "$OPENCLAW_USER" -c "openclaw onboard"
-    
-    # 2. 确保服务运行并保存
-    echo ""
-    log_info "正在完成部署..."
-    
-    # 强制接管：清理旧进程
-    log_info "清理旧进程..."
-    # 彻底杀掉该用户的所有 PM2 进程，防止僵尸守护进程导致的 EACCES
-    pkill -u "$OPENCLAW_USER" -f pm2 >/dev/null 2>&1 || true
-    su - "$OPENCLAW_USER" -c "/home/$OPENCLAW_USER/.npm-global/bin/pm2 kill" >/dev/null 2>&1 || true
-    
-    # 强制修正权限，确保 .pm2 和 .npm-global 属于正确用户
-    log_info "正在修正文件权限..."
-    chown -R "$OPENCLAW_USER:$OPENCLAW_USER" "/home/$OPENCLAW_USER"
-
-    log_info "启动 OpenClaw 服务..."
-    # 确保 node 权限正常 (防止 extreme case)
-    if [ -f /usr/bin/node ]; then chmod 755 /usr/bin/node; fi
-    
-    su - "$OPENCLAW_USER" -c "pm2 start \"$WORKSPACE_DIR/start.sh\" --name openclaw"
-    su - "$OPENCLAW_USER" -c "/home/$OPENCLAW_USER/.npm-global/bin/pm2 save"
+    run_step "启动并保存服务" "
+        su - \"$OPENCLAW_USER\" -c \"
+            cd $WORKSPACE_DIR
+            $PM2_BIN delete openclaw 2>/dev/null || true
+            $PM2_BIN start $CLAW_BIN --name openclaw -- gateway
+            $PM2_BIN save
+        \"
+    "
     
     echo ""
     echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"

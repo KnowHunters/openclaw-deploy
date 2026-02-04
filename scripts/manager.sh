@@ -13,6 +13,7 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-/home/$OPENCLAW_USER/openclaw-bot}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="/home/$OPENCLAW_USER/.openclaw/openclaw.json"
 ENV_FILE="$WORKSPACE_DIR/.env"
+PM2_BIN="/home/$OPENCLAW_USER/.npm-global/bin/pm2"
 
 # 颜色定义
 CYAN='\033[0;36m'
@@ -94,7 +95,7 @@ header() {
     echo -e "${NC}"
     
     # 状态栏
-    local pm2_status=$(sudo -u "$OPENCLAW_USER" pm2 jlist | grep -q "online" && echo -e "${GREEN}● 运行中${NC}" || echo -e "${RED}● 已停止${NC}")
+    local pm2_status=$(sudo -u "$OPENCLAW_USER" "$PM2_BIN" jlist | grep -q "online" && echo -e "${GREEN}● 运行中${NC}" || echo -e "${RED}● 已停止${NC}")
     local mem_usage=$(free -h | awk 'NR==2{print $3 "/" $2}')
     local load_avg=$(uptime | awk -F'load average:' '{ print $2 }' | cut -d, -f1)
     
@@ -507,8 +508,12 @@ deep_diagnose() {
     local report_file="/home/$OPENCLAW_USER/openclaw_report.txt"
     run_as_user_shell "echo 'OpenClaw Report' > '$report_file'"
     run_as_user_shell "date >> '$report_file'"
+    run_as_user_shell "echo '--- Node Version (Should be > v22) ---' >> '$report_file'"
+    run_as_user_shell "node -v >> '$report_file'"
+    run_as_user_shell "echo '--- Port 18789 Check ---' >> '$report_file'"
+    run_as_user_shell "netstat -tuln | grep 18789 >> '$report_file' 2>&1 || echo 'Port 18789 not listening' >> '$report_file'"
     run_as_user_shell "openclaw doctor >> '$report_file' 2>&1"
-    run_as_user_shell "pm2 status >> '$report_file' 2>&1"
+    run_as_user_shell "$PM2_BIN status >> '$report_file' 2>&1"
     run_as_user_shell "df -h >> '$report_file' 2>&1"
     run_as_user_shell "free -h >> '$report_file' 2>&1"
     
@@ -596,11 +601,11 @@ menu_service() {
         echo ""
         read -p "请选择: " choice
         case $choice in
-            1) run_as_user_shell "pm2 start openclaw || (cd $WORKSPACE_DIR && pm2 start npm --name openclaw -- start)"; pause ;;
-            2) run_as_user pm2 stop openclaw; pause ;;
-            3) run_as_user pm2 restart openclaw; pause ;;
-            4) run_as_user pm2 status; pause ;;
-            5) run_as_user pm2 logs openclaw --lines 50 ;;
+            1) run_as_user_shell "$PM2_BIN start openclaw || (cd $WORKSPACE_DIR && $PM2_BIN start openclaw -- gateway)"; pause ;;
+            2) run_as_user "$PM2_BIN" stop openclaw; pause ;;
+            3) run_as_user "$PM2_BIN" restart openclaw; pause ;;
+            4) run_as_user "$PM2_BIN" status; pause ;;
+            5) run_as_user "$PM2_BIN" logs openclaw --lines 50 ;;
             0) return ;;
         esac
     done
@@ -728,7 +733,7 @@ quick_start_wizard() {
     
     # 5. 重启服务
     echo -e "\n${CYAN}→ 配置已完成，正在重启服务...${NC}"
-    run_as_user pm2 restart openclaw
+    run_as_user "$PM2_BIN" restart openclaw
     
     echo -e "\n${GREEN}🎉 初始化完成！${NC}"
     test_api_connection

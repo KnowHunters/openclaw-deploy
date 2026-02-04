@@ -80,8 +80,6 @@ spinner() {
         i=$(( (i+1) % ${#chars} ))
         sleep $delay
     done
-    
-    # 恢复光标在 run_step 结束时处理
 }
 
 run_step() {
@@ -218,14 +216,17 @@ ensure_user_exists() {
 
 fix_node_permissions() {
     # 修复 Node 二进制权限 (解决 PM2 spawn EACCES)
-    local node_path=$(which node)
-    if [ -n "$node_path" ]; then
-        chmod 755 "$node_path"
-        local real_node=$(readlink -f "$node_path")
-        if [ "$real_node" != "$node_path" ]; then
-            chmod 755 "$real_node"
+    # 遍历常见的 Node 路径，不管 which 结果如何，确保所有可能的 binary 都有执行权限
+    for node_path in "/usr/bin/node" "/usr/local/bin/node" "$(which node)"; do
+        if [ -f "$node_path" ]; then
+            chmod 755 "$node_path"
+            local real_node=$(readlink -f "$node_path")
+            if [ "$real_node" != "$node_path" ]; then
+                chmod 755 "$real_node"
+            fi
         fi
-    fi
+    done
+    
     # 同样修复 pm2 目录权限 (防止 Daemon 启动失败)
     if [ -d "/home/$OPENCLAW_USER/.pm2" ]; then
         chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2"
@@ -558,8 +559,6 @@ main() {
     
     # 1.5 确保用户存在 (Linuxbrew 安装需要)
     ensure_user_exists
-
-    # 2. 安装基础依赖和 CLI
     
     # 2. 安装基础依赖和 CLI
     install_dependencies
@@ -578,7 +577,12 @@ main() {
         setup_infrastructure
     else
         # 更新模式下，仅重启服务
-        run_step "重启服务" "sudo -u $OPENCLAW_USER pm2 restart all"
+        # 必须先杀掉旧的 daemon，防止权限错乱
+        pkill -u $OPENCLAW_USER -f pm2 >/dev/null 2>&1 || true
+        # 再次确保 user 拥有 .pm2 目录
+        chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2"
+        
+        run_step "重启服务" "sudo -u $OPENCLAW_USER pm2 restart all || sudo -u $OPENCLAW_USER pm2 start openclaw"
     fi
     
     # 6. 进入配置向导

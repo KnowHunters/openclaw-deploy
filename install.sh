@@ -420,6 +420,11 @@ install_monitoring_scripts() {
         chown "$OPENCLAW_USER:$OPENCLAW_USER" "$SCRIPTS_DIR/$script"
     done
     
+    # 创建全局快捷指令
+    ln -sf "$SCRIPTS_DIR/manager.sh" /usr/local/bin/claw
+    chmod +x /usr/local/bin/claw
+    log_ok "已创建全局指令: claw"
+    
     # 配置 Cron 任务 (日志清理)
     run_step "配置日志自动清理" "(crontab -l 2>/dev/null | grep -v 'log-cleanup.sh'; echo '0 2 * * * $SCRIPTS_DIR/log-cleanup.sh >> $WORKSPACE_DIR/logs/cleanup.log 2>&1') | crontab -"
 }
@@ -493,7 +498,8 @@ show_completion() {
     echo -e "     查看帮助 : ${GRAY}su - $OPENCLAW_USER -c '/home/$OPENCLAW_USER/.npm-global/bin/openclaw --help'${NC}"
     echo ""
     echo -e "${YELLOW}👉 下一步操作建议${NC}"
-    echo -e "   使用管理菜单来管理一切 (含备份、更新、优化等)"
+    echo -e "   强烈建议使用管理菜单来管理一切 (含备份、更新、优化等)"
+    echo -e "   运行指令: ${GREEN}claw${NC}"
     echo ""
     
     # 自动倒计时进入

@@ -14,7 +14,7 @@
 set -e
 
 # ════════════════════ 全局配置 ════════════════════
-VERSION="1.0.0"
+VERSION="1.0.1"
 OPENCLAW_USER="openclaw"
 WORKSPACE_DIR="/home/$OPENCLAW_USER/openclaw-bot"
 SCRIPTS_DIR="/home/$OPENCLAW_USER/openclaw-scripts"

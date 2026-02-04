@@ -216,6 +216,22 @@ ensure_user_exists() {
     fi
 }
 
+fix_node_permissions() {
+    # 修复 Node 二进制权限 (解决 PM2 spawn EACCES)
+    local node_path=$(which node)
+    if [ -n "$node_path" ]; then
+        chmod 755 "$node_path"
+        local real_node=$(readlink -f "$node_path")
+        if [ "$real_node" != "$node_path" ]; then
+            chmod 755 "$real_node"
+        fi
+    fi
+    # 同样修复 pm2 目录权限 (防止 Daemon 启动失败)
+    if [ -d "/home/$OPENCLAW_USER/.pm2" ]; then
+        chown -R $OPENCLAW_USER:$OPENCLAW_USER "/home/$OPENCLAW_USER/.pm2"
+    fi
+}
+
 # ════════════════════ 系统调优 ════════════════════
 optimize_system() {
     [ "$UPDATE_MODE" = true ] && return
@@ -541,6 +557,9 @@ main() {
     
     # 4. 安装监控脚本
     install_monitoring_scripts
+    
+    # 4.5 修复 Node 权限
+    fix_node_permissions
     
     # 5. 基础设施配置 (不启动)
     if [ "$UPDATE_MODE" = false ]; then

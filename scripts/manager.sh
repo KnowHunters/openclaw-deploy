@@ -965,13 +965,100 @@ install_docker() {
     pause
 }
 
+install_caddy() {
+    header
+    echo -e "${BOLD}🔒 安装 Caddy Web Server${NC}"
+    echo -e "${GRAY}自动申请 HTTPS 证书的反向代理服务器${NC}"
+    echo ""
+    if command -v caddy &>/dev/null; then
+        echo -e "${GREEN}✓ Caddy 已安装${NC}"
+        caddy version
+    else
+        echo -e "${CYAN}→ 正在安装 Caddy...${NC}"
+        # Ubuntu/Debian official install
+        run_as_user_shell "sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https"
+        run_as_user_shell "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+        run_as_user_shell "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list"
+        run_as_user_shell "sudo apt-get update && sudo apt-get install caddy -y"
+        echo -e "${GREEN}✓ 安装完成${NC}"
+        echo -e "配置文件路径: /etc/caddy/Caddyfile"
+    fi
+    pause
+}
+
+install_tailscale() {
+    header
+    echo -e "${BOLD}🔌 安装 Tailscale${NC}"
+    echo -e "${GRAY}基于 WireGuard 的零配置 VPN${NC}"
+    echo ""
+    if command -v tailscale &>/dev/null; then
+        echo -e "${GREEN}✓ Tailscale 已安装${NC}"
+        tailscale version
+    else
+        echo -e "${CYAN}→ 正在安装 Tailscale...${NC}"
+        curl -fsSL https://tailscale.com/install.sh | sh
+        echo -e "${GREEN}✓ 安装完成${NC}"
+    fi
+    echo ""
+    read -p "是否立即启动并登录? [y/N] " start_ts
+    if [[ $start_ts =~ ^[Yy]$ ]]; then
+        sudo tailscale up
+    fi
+    pause
+}
+
+install_btop() {
+    header
+    echo -e "${BOLD}📈 安装 Btop${NC}"
+    echo -e "${GRAY}炫酷的系统资源监控工具${NC}"
+    echo ""
+    if command -v btop &>/dev/null; then
+        echo -e "${GREEN}✓ Btop 已安装${NC}"
+    else
+        echo -e "${CYAN}→ 正在安装 Btop...${NC}"
+        # 优先尝试 snap，否则 apt
+        if command -v snap &>/dev/null; then
+            sudo snap install btop
+        else
+            sudo apt-get update && sudo apt-get install -y btop
+        fi
+        echo -e "${GREEN}✓ 安装完成${NC}"
+    fi
+    pause
+}
+
+install_rclone() {
+    header
+    echo -e "${BOLD}☁️ 安装 Rclone${NC}"
+    echo -e "${GRAY}挂载/同步 40+ 种网盘存储${NC}"
+    echo ""
+    if command -v rclone &>/dev/null; then
+        echo -e "${GREEN}✓ Rclone 已安装${NC}"
+        rclone --version | head -n 1
+    else
+        echo -e "${CYAN}→ 正在安装 Rclone...${NC}"
+        curl https://rclone.org/install.sh | sudo bash
+        echo -e "${GREEN}✓ 安装完成${NC}"
+    fi
+    echo ""
+    read -p "是否立即配置? [y/N] " config_now
+    if [[ $config_now =~ ^[Yy]$ ]]; then
+        rclone config
+    fi
+    pause
+}
+
 menu_softwares() {
     while true; do
         header
         echo -e "${BOLD}💿 常用软件 (Common Softwares)${NC}"
         echo ""
-        echo "  1) 🌐 ZeroTier   (内网穿透/异地组网)"
+        echo "  1) 🌐 ZeroTier   (异地组网)"
         echo "  2) 🐳 Docker     (容器引擎)"
+        echo "  3) 🔒 Caddy      (Web服务器/HTTPS)"
+        echo "  4) 🔌 Tailscale  (VPN/组网)"
+        echo "  5) 📈 Btop       (系统监控)"
+        echo "  6) ☁️ Rclone     (网盘挂载)"
         echo ""
         echo "  0) 返回"
         echo ""
@@ -979,6 +1066,10 @@ menu_softwares() {
         case $choice in
             1) install_zerotier ;;
             2) install_docker ;;
+            3) install_caddy ;;
+            4) install_tailscale ;;
+            5) install_btop ;;
+            6) install_rclone ;;
             0) return ;;
         esac
     done

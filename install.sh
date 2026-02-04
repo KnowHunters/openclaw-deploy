@@ -494,8 +494,20 @@ show_completion() {
     echo -e "${YELLOW}👉 下一步操作建议${NC}"
     echo -e "   强烈建议使用管理菜单来管理一切 (含备份、更新、优化等)"
     echo -e "   运行指令: "
-    echo -e "   ${GREEN}$HOME/openclaw-scripts/manager.sh${NC}"
+    echo -e "   ${GREEN}$SCRIPTS_DIR/manager.sh${NC}"
     echo ""
+    
+    # 自动倒计时进入
+    for i in {5..1}; do
+        echo -ne "\r${CYAN}🚀 正在为您自动启动配置向导 (按 Ctrl+C 取消): ${RED}$i${NC}s... "
+        sleep 1
+    done
+    echo ""
+    echo -e "${GREEN}启动中...${NC}"
+    sleep 0.5
+    
+    # 移交控制权给 manager.sh
+    exec "$SCRIPTS_DIR/manager.sh"
 }
 
 # ════════════════════ 主流程 ════════════════════

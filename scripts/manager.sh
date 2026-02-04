@@ -42,11 +42,19 @@ prompt_input() {
 }
 
 run_as_user() {
-    sudo -u "$OPENCLAW_USER" "$@"
+    if [ "$(whoami)" = "$OPENCLAW_USER" ]; then
+        "$@"
+    else
+        sudo -u "$OPENCLAW_USER" "$@"
+    fi
 }
 
 run_as_user_shell() {
-    su - "$OPENCLAW_USER" -c "$1"
+    if [ "$(whoami)" = "$OPENCLAW_USER" ]; then
+        bash -c "$1"
+    else
+        su - "$OPENCLAW_USER" -c "$1"
+    fi
 }
 
 ensure_nano() {

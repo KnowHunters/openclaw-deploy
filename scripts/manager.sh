@@ -919,6 +919,71 @@ quick_start_wizard() {
     test_api_connection
 }
 
+# --- 模块 J: 常用软件 ---
+install_zerotier() {
+    header
+    echo -e "${BOLD}🌐 安装 ZeroTier${NC}"
+    echo -e "${GRAY}异地组网/内网穿透神器${NC}"
+    echo ""
+    if command -v zerotier-cli &>/dev/null; then
+        echo -e "${GREEN}✓ ZeroTier 已安装${NC}"
+        zerotier-cli status
+    else
+        echo -e "${CYAN}→ 正在安装 ZeroTier...${NC}"
+        curl -s https://install.zerotier.com | sudo bash
+        echo -e "${GREEN}✓ 安装完成${NC}"
+    fi
+    
+    echo ""
+    read -p "是否立即加入网络? (输入 Network ID，留空跳过): " net_id
+    if [ -n "$net_id" ]; then
+        sudo zerotier-cli join "$net_id"
+    fi
+    pause
+}
+
+install_docker() {
+    header
+    echo -e "${BOLD}🐳 安装 Docker${NC}"
+    echo -e "${GRAY}容器化应用引擎${NC}"
+    echo ""
+    if command -v docker &>/dev/null; then
+        echo -e "${GREEN}✓ Docker 已安装${NC}"
+        docker --version
+    else
+        echo -e "${CYAN}→ 正在安装 Docker...${NC}"
+        curl -fsSL https://get.docker.com | sudo bash
+        
+        # 将 openclaw 用户加入 docker 组
+        if [ -n "$OPENCLAW_USER" ]; then
+            echo -e "${YELLOW}正在配置权限 (Adding $OPENCLAW_USER to docker group)...${NC}"
+            sudo usermod -aG docker "$OPENCLAW_USER"
+        fi
+        
+        echo -e "${GREEN}✓ 安装完成${NC}"
+    fi
+    pause
+}
+
+menu_softwares() {
+    while true; do
+        header
+        echo -e "${BOLD}💿 常用软件 (Common Softwares)${NC}"
+        echo ""
+        echo "  1) 🌐 ZeroTier   (内网穿透/异地组网)"
+        echo "  2) 🐳 Docker     (容器引擎)"
+        echo ""
+        echo "  0) 返回"
+        echo ""
+        read -p "请选择: " choice
+        case $choice in
+            1) install_zerotier ;;
+            2) install_docker ;;
+            0) return ;;
+        esac
+    done
+}
+
 # ==============================================================================
 # [5] 主入口 (Main Entry)
 # ==============================================================================
@@ -930,6 +995,7 @@ while true; do
     echo -e " ${GREEN}[2] 📦 技能市场${NC}"
     echo -e " ${GREEN}[3] ⚙️ 配置中心${NC}  (Models, Persona, Security)"
     echo -e " ${GREEN}[4] 🧹 维护诊断${NC}  (Fix, Backup, Update)"
+    echo -e " ${GREEN}[5] 💿 常用软件${NC}  (ZeroTier, Docker)"
     echo ""
     echo -e " [q] 退出"
     echo ""
@@ -941,6 +1007,7 @@ while true; do
         2) menu_skills ;;
         3) menu_config ;;
         4) menu_maintenance ;;
+        5) menu_softwares ;;
         q) echo "再见!"; exit 0 ;;
         *) ;;
     esac

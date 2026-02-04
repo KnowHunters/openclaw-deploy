@@ -201,6 +201,7 @@ configure_custom_provider() {
         config.models.providers['$provider_id'] = {
             baseUrl: '$base_url',
             apiKey: '$api_key',
+            api: 'openai-completions',
             models: [{ id: '$model_id', name: '$model_id', contextWindow: 128000, maxTokens: 16384 }]
         };
         fs.writeFileSync(configFile, JSON.stringify(config, null, 2));

@@ -427,8 +427,19 @@ install_openclaw_cli() {
         cli_name="openclaw"
     fi
     
-    ui_log_step "安装 $cli_name CLI..."
-    
+    # 检查是否已安装
+    if command_exists "$cli_name"; then
+        local current_version=$($cli_name --version 2>/dev/null | head -1)
+        log_info "发现已安装版本: $current_version"
+        
+        if ui_confirm "$cli_name 已安装，是否重新安装/更新?" "n"; then
+            log_info "用户选择重新安装"
+        else
+            log_success "跳过安装"
+            return 0
+        fi
+    fi
+
     # 配置 npm 全局目录（避免权限问题）
     setup_npm_global_dir
     
@@ -632,7 +643,10 @@ run_installation() {
     
     # 6. 运行配置向导
     if ui_confirm "是否运行配置向导?" "y"; then
-        run_config_wizard
+        if ! run_config_wizard; then
+            log_warning "配置向导未正常完成，您可以稍后运行 '$cli_name onboard' 手动配置"
+            # 不让 wizard 失败阻断后续的清理流程
+        fi
     fi
     
     save_progress "installation_completed"

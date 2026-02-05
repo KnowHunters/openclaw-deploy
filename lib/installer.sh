@@ -429,14 +429,29 @@ install_openclaw_cli() {
     
     # 检查是否已安装
     if command_exists "$cli_name"; then
-        local current_version=$($cli_name --version 2>/dev/null | head -1)
-        log_info "发现已安装版本: $current_version"
+        local current_version=$($cli_name --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+        local latest_version=$(get_openclaw_latest_version "$version_type")
         
-        if ui_confirm "$cli_name 已安装，是否重新安装/更新?" "n"; then
-            log_info "用户选择重新安装"
+        log_info "当前版本: $current_version, 最新版本: $latest_version"
+        
+        if [[ "$latest_version" != "unknown" ]] && version_ge "$current_version" "$latest_version"; then
+            log_success "已安装最新版本 ($current_version)"
+            if ui_confirm "是否强制重新安装?" "n"; then
+                log_info "用户选择强制重新安装"
+            else
+                log_success "跳过安装"
+                return 0
+            fi
         else
-            log_success "跳过安装"
-            return 0
+            local prompt_msg="$cli_name 已安装 ($current_version)"
+            [[ "$latest_version" != "unknown" ]] && prompt_msg="$prompt_msg，发现新版本 $latest_version"
+            
+            if ui_confirm "$prompt_msg，是否更新/重装?" "y"; then
+                log_info "用户选择更新/重装"
+            else
+                log_success "跳过安装"
+                return 0
+            fi
         fi
     fi
 

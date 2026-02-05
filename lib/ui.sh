@@ -278,7 +278,10 @@ ui_input() {
     
     # 提示输出到 stderr，避免被 $() 捕获
     echo -ne "  ${S_BOLD}${prompt}${C_RESET}" >&2
-    [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
+    if [[ -n "$default" ]]; then
+        echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
+        echo -ne " ${S_DIM}(直接回车使用默认值)${C_RESET}" >&2
+    fi
     echo -ne ": " >&2
     
     # 从 /dev/tty 读取，确保在管道执行时也能获取用户输入

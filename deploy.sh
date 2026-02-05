@@ -39,7 +39,8 @@ fi
 
 # 如果库文件不存在，需要下载
 if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
-    echo "正在下载脚本..."
+    VERSION="2.1.6"
+    echo "正在下载脚本 (v${VERSION})..."
     
     # 下载库文件
     BASE_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main"

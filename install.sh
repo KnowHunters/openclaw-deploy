@@ -562,7 +562,14 @@ setup_infrastructure() {
     run_step "初始化默认配置" "
         mkdir -p $CONFIG_DIR
         if [ ! -f $CONFIG_DIR/openclaw.json ]; then
-            echo '{}' > $CONFIG_DIR/openclaw.json
+            cat > $CONFIG_DIR/openclaw.json <<JSON
+{
+  "gateway": {
+    "port": $GATEWAY_PORT,
+    "host": "$GATEWAY_BIND"
+  }
+}
+JSON
         fi
         chown -R $OPENCLAW_USER:$OPENCLAW_USER $CONFIG_DIR
     "

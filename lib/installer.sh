@@ -291,21 +291,42 @@ install_nodejs_linux() {
         # 1. 清理旧的 nodesource 源，防止冲突
         sudo rm -f /etc/apt/sources.list.d/nodesource.list
         
-        # 2. 下载并运行 setup 脚本 (分开执行以捕获错误)
+        # 2. 下载并运行 setup 脚本
         local setup_script="/tmp/nodesource_setup.sh"
         if curl -fsSL "https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x" -o "$setup_script"; then
-             bash "$setup_script" >> "$LOG_FILE" 2>&1
+             # 打印 OS 信息帮助调试
+             echo "OS Release Info:" >> "$LOG_FILE"
+             cat /etc/os-release >> "$LOG_FILE" 2>&1 || true
+             
+             # 执行 setup 脚本
+             log_info "运行 setup 脚本..."
+             sudo bash "$setup_script" >> "$LOG_FILE" 2>&1
         else
              log_error "下载 Node.js setup 脚本失败"
              return 1
         fi
         
-        # 3. 记录当前的 apt policy (方便调试为什么不更新)
-        echo "Wait for checking apt-cache policy nodejs..." >> "$LOG_FILE"
-        apt-cache policy nodejs >> "$LOG_FILE" 2>&1 || true
+        # 3. 诊断信息 (直接显示给用户)
+        log_info "检查软件源状态..."
+        if [[ -f /etc/apt/sources.list.d/nodesource.list ]]; then
+            echo "Repo file content:" >> "$LOG_FILE"
+            cat /etc/apt/sources.list.d/nodesource.list >> "$LOG_FILE"
+        else
+            log_warning "NodeSource 源文件未创建!"
+        fi
+        
+        log_info "更新软件包索引..."
+        sudo apt-get update >> "$LOG_FILE" 2>&1
+        
+        log_info "检查 Node.js 版本策略:"
+        # 这里的输出同时显示在屏幕和日志中
+        apt-cache policy nodejs | tee -a "$LOG_FILE" | sed 's/^/    /'
         
         # 4. 安装
-        log_info "执行 apt install nodejs..."
+        log_info "执行安装..."
+        # 尝试先移除旧版本 (可选，防止冲突)
+        # sudo apt-get remove -y nodejs libnode* >> "$LOG_FILE" 2>&1 || true
+        
         sudo apt-get install -y nodejs >> "$LOG_FILE" 2>&1
         
     elif command_exists dnf; then

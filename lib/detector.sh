@@ -56,18 +56,30 @@ SUGGESTED_MODE=""  # fresh / upgrade / reinstall
 detect_system() {
     log_step "检测系统环境..."
     
+    echo "DEBUG: 开始检测 OS..." >&2
     # 操作系统
     DETECTED_OS=$(detect_os)
     DETECTED_DISTRO="$OS_DISTRO"
     DETECTED_VERSION="$OS_VERSION"
+    echo "DEBUG: OS 检测完成: $DETECTED_OS" >&2
     
+    echo "DEBUG: 开始检测架构..." >&2
     # 架构
     DETECTED_ARCH=$(detect_arch)
+    echo "DEBUG: 架构检测完成: $DETECTED_ARCH" >&2
     
+    echo "DEBUG: 开始检测内存..." >&2
     # 资源
     DETECTED_MEMORY_MB=$(detect_memory)
+    echo "DEBUG: 内存检测完成: $DETECTED_MEMORY_MB" >&2
+    
+    echo "DEBUG: 开始检测磁盘..." >&2
     DETECTED_DISK_MB=$(detect_disk "$HOME")
+    echo "DEBUG: 磁盘检测完成: $DETECTED_DISK_MB" >&2
+    
+    echo "DEBUG: 开始检测 CPU..." >&2
     DETECTED_CPU_CORES=$(detect_cpu_cores)
+    echo "DEBUG: CPU 检测完成: $DETECTED_CPU_CORES" >&2
     
     log_debug "OS: $DETECTED_OS, Distro: $DETECTED_DISTRO, Version: $DETECTED_VERSION"
     log_debug "Arch: $DETECTED_ARCH, Memory: ${DETECTED_MEMORY_MB}MB, Disk: ${DETECTED_DISK_MB}MB"

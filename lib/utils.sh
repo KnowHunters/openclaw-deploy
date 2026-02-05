@@ -148,6 +148,9 @@ handle_error() {
     
     # 显示光标
     echo -ne "\033[?25h"
+    
+    # 强制输出错误到控制台
+    echo -e "\n\033[0;31m[ERROR] 脚本异常退出 (Line $line_no): $command (Exit: $exit_code)\033[0m" >&2
 }
 
 # 退出处理

@@ -437,16 +437,20 @@ ui_select() {
         
         echo -e "\n  ${S_DIM}↑/↓ 选择  Enter 确认  1-9 直选  q 退出${C_RESET}"
         
-        # 读取按键
-        if ! read -rsn1 key </dev/tty; then
-            # 读取失败时直接重试，避免误判退出/确认
-            continue
+        # 读取按键（优先 /dev/tty，失败则回退 stdin）
+        if ! read -rsn1 key </dev/tty 2>/dev/null; then
+            if ! read -rsn1 key 2>/dev/null; then
+                # 读取失败时直接重试，避免误判退出/确认
+                continue
+            fi
         fi
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
             local rest=""
-            read -rsn2 -t 0.1 rest </dev/tty
+            if ! read -rsn2 -t 0.1 rest </dev/tty 2>/dev/null; then
+                read -rsn2 -t 0.1 rest 2>/dev/null
+            fi
             if [[ -n "$rest" ]]; then
                 key="$rest"
             else
@@ -455,7 +459,10 @@ ui_select() {
         fi
 
         if [[ "$UI_DEBUG_KEYS" == "1" ]]; then
-            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$(printf '%s' "$key" | xxd -p)" >> "$LOG_FILE"
+            local hex
+            hex="$(printf '%s' "$key" | xxd -p)"
+            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$hex" >> "$LOG_FILE"
+            printf "\n[KEY_DEBUG] raw=%q hex=%s\n" "$key" "$hex" > /dev/tty 2>/dev/null || true
         fi
         
         case "$key" in
@@ -527,15 +534,19 @@ ui_multi_select() {
         
         echo -e "\n  ${S_DIM}↑/↓ 移动  Space 选择  Enter 确认  a 全选  n 全不选${C_RESET}"
         
-        # 读取按键
-        if ! read -rsn1 key </dev/tty; then
-            continue
+        # 读取按键（优先 /dev/tty，失败则回退 stdin）
+        if ! read -rsn1 key </dev/tty 2>/dev/null; then
+            if ! read -rsn1 key 2>/dev/null; then
+                continue
+            fi
         fi
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
             local rest=""
-            read -rsn2 -t 0.1 rest </dev/tty
+            if ! read -rsn2 -t 0.1 rest </dev/tty 2>/dev/null; then
+                read -rsn2 -t 0.1 rest 2>/dev/null
+            fi
             if [[ -n "$rest" ]]; then
                 key="$rest"
             else
@@ -544,7 +555,10 @@ ui_multi_select() {
         fi
 
         if [[ "$UI_DEBUG_KEYS" == "1" ]]; then
-            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$(printf '%s' "$key" | xxd -p)" >> "$LOG_FILE"
+            local hex
+            hex="$(printf '%s' "$key" | xxd -p)"
+            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$hex" >> "$LOG_FILE"
+            printf "\n[KEY_DEBUG] raw=%q hex=%s\n" "$key" "$hex" > /dev/tty 2>/dev/null || true
         fi
         
         case "$key" in

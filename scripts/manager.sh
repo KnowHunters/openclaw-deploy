@@ -1125,6 +1125,41 @@ menu_softwares() {
     done
 }
 
+# 引导安装向导
+menu_install_wizard() {
+    clear
+    echo -e "${CYAN}"
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║               OpenClaw 安装向导 (Install Wizard)          ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+    echo -e "${YELLOW}检测到本机尚未安装 OpenClaw。${NC}"
+    echo ""
+    echo "  1) 🚀 立即安装 (Install Now)"
+    echo "  0) 退出"
+    echo ""
+    read -p "请选择: " choice
+    case $choice in
+        1)
+            echo ""
+            echo -e "${GREEN}→ 正在启动安装程序...${NC}"
+            # 自动下载并运行 install.sh
+            local install_script="/tmp/openclaw_install.sh"
+            if curl -fsSL "$INSTALL_URL" -o "$install_script"; then
+                chmod +x "$install_script"
+                # 执行安装，安装完成后 install.sh 会自动 exec 回 manager.sh (installed version)
+                sudo bash "$install_script"
+                exit 0
+            else
+                echo -e "${RED}[✗] 下载安装脚本失败，请检查网络连接${NC}"
+                pause
+            fi
+            ;;
+        0) exit 0 ;;
+        *) ;;
+    esac
+}
+
 # ==============================================================================
 # [5] 主入口 (Main Entry)
 # ==============================================================================

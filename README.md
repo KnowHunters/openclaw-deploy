@@ -1,202 +1,87 @@
-# OpenClaw Deploy 🚀
+# OpenClaw Deploy 2.0
 
-> **终极版一键部署脚本** | The Ultimate One-Click Deployment Script for OpenClaw
-> 
-> **By KnowHunters (知识猎人)**
+> 🦞 智能一键部署系统 - 让 OpenClaw 安装变得简单
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)]()
-[![Author](https://img.shields.io/badge/author-KnowHunters-orange.svg)](https://github.com/KnowHunters)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+## ✨ 特性
 
-## 📌 前置条件 | Prerequisites
+- 🧠 **智能检测** - 自动识别系统环境，智能选择安装模式
+- 🎨 **美观界面** - 统一的 TUI 界面，友好的交互体验
+- 🌍 **双版本支持** - 国际版 (openclaw) / 中文版 (openclaw-cn)
+- 🔧 **交互式配置** - 引导式配置向导，小白也能轻松上手
+- 📦 **技能管理** - 搜索、安装、管理 OpenClaw Skills
+- 🏥 **健康检查** - 系统状态监控、诊断和自动修复
+- 🔄 **自动更新** - 脚本自更新功能
 
-本脚本仅在 **Ubuntu 24.04** 系统中测试通过。如果你的服务器是其他系统，建议使用 [reinstall](https://github.com/bin456789/reinstall) 项目 DD 成纯净版 Ubuntu：
-
-```bash
-# 下载 reinstall 脚本
-curl -O https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh || wget -O reinstall.sh https://raw.githubusercontent.com/bin456789/reinstall/main/reinstall.sh
-
-# DD 成 Ubuntu 24.04 (会重装系统，请提前备份数据！)
-bash reinstall.sh ubuntu 24.04
-```
-
-> ⚠️ **警告**: 此操作会清除服务器所有数据，请确保已备份重要文件！
-
----
-
-## ⚡ Quick Start
+## 🚀 快速开始
 
 ```bash
-# ⚡️ 新版安装 (推荐)
-bash <(curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/scripts/manager.sh)
-
-# 备用安装 (传统方式)
-bash <(curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh)
+curl -fsSL https://your-repo/deploy.sh | bash
 ```
 
-<details>
-<summary>📌 高级选项</summary>
-
-```bash
-# 非交互式安装 (CI/CD 环境，需设置环境变量)
-export TELEGRAM_BOT_TOKEN="your_token"
-export API_KEY="your_api_key"
-curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh -o install.sh && sudo -E bash install.sh -n
-
-# 仅更新 (保留配置)
-curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh -o install.sh && sudo bash install.sh -u
-
-# 自定义网关配置
-export GATEWAY_BIND="0.0.0.0"
-export GATEWAY_PORT="8080"
-curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh -o install.sh && sudo -E bash install.sh
-```
-
-</details>
-
-## ⚙️ 配置说明
-
-安装完成后，脚本会自动启动配置向导：
-
-1.  **自动运行** `openclaw onboard` (5秒倒计时后)
-2.  **配置完成** 后，脚本会自动启动服务并保存 pm2 进程
-
-无需手动执行任何额外命令。
-
-如果需要手动重新配置：
-```bash
-sudo -u openclaw openclaw onboard
-```
-
-
-
----
-
-## ✨ Features
-
-| 🔒 **安全优先** | 默认绑定 `127.0.0.1`，支持重装确认、配置备份 |
-| 📊 **监控套件** | 5 个运维脚本：健康检查、日志清理、自动备份、恢复、管理面板 |
-| 🎨 **极致体验** | Spinner 进度条、结构化汇总面板、彩色日志 |
-| 🛠 **开发者工具链** | GitHub CLI、ripgrep、fd、bat、htop、yt-dlp、pandas |
-| 🔄 **更新模式** | `-u` 参数仅更新核心组件，保留所有配置 |
-
----
-
-## 📁 Project Structure
+## 📁 项目结构
 
 ```
 openclaw-deploy/
-├── install.sh              # 主安装脚本
+├── deploy.sh              # 主入口脚本
+├── lib/                   # 模块库
+│   ├── ui.sh              # UI 框架
+│   ├── utils.sh           # 工具函数
+│   ├── detector.sh        # 环境检测
+│   ├── installer.sh       # 安装管理
+│   ├── wizard.sh          # 配置向导
+│   ├── skills.sh          # 技能管理
+│   ├── software.sh        # 软件管理
+│   ├── health.sh          # 状态检查
+│   └── updater.sh         # 自更新
+├── templates/             # 配置模板
+├── data/                  # 数据文件
+├── docs/                  # 开发文档
 ├── README.md
 ├── LICENSE
-├── scripts/                # 监控与运维套件
-│   ├── health-monitor.sh   # 健康检查 + 自动恢复
-│   ├── log-cleanup.sh      # 日志轮转清理
-│   ├── backup.sh           # 自动配置备份
-│   ├── restore.sh          # 交互式恢复向导
-│   └── manager.sh          # 一键管理面板
-└── docs/
-    └── ...
+└── .gitignore
 ```
 
----
+## 📖 文档
 
-## 🖥 Management Panel
+- [重构开发计划](docs/重构开发计划.md)
+- [补充细节](docs/重构开发计划_补充细节.md)
+- [官方文档核心要点](docs/官方文档核心要点.md)
 
-安装完成后，运行管理面板：
+## 🔧 开发
+
+### 环境要求
+
+- Bash 4.0+
+- curl
+- jq (可选)
+
+### 本地测试
 
 ```bash
-/home/openclaw/openclaw-scripts/manager.sh
+# 克隆仓库
+git clone https://github.com/KnowHunters/openclaw-deploy.git
+cd openclaw-deploy
+
+# 运行脚本
+bash deploy.sh
 ```
 
-功能菜单：
-- 启动/停止/重启服务
-- 查看实时日志
-- 运行健康检查
-- 查看性能统计
-- 创建/恢复备份
-- 清理日志
-- 更新 OpenClaw
+## 📝 更新日志
 
----
+### v2.0.0 (开发中)
+- 🆕 全新重构，统一 UI 框架
+- 🆕 智能环境检测
+- 🆕 交互式配置向导
+- 🆕 技能管理功能
+- 🆕 小白友好设计
 
-## 📋 Automated Tasks
+## 📄 许可证
 
-脚本自动配置以下 Cron 任务：
+MIT License - 详见 [LICENSE](LICENSE)
 
-| 任务 | 频率 | 说明 |
-|------|------|------|
-| 健康检查 | 每 5 分钟 | 自动检测服务状态，故障时自动重启 |
-| 自动备份 | 每日凌晨 3 点 | 备份配置文件，保留 30 天 |
-| 日志清理 | 每周日凌晨 2 点 | 清理过期日志，释放磁盘空间 |
+## 🙏 致谢
 
-> 💡 **性能监控**: 使用 PM2 内置功能 `pm2 monit` 查看实时 CPU/内存
-
----
-
-## 🔧 Environment Variables
-
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `GATEWAY_BIND` | `127.0.0.1` | 网关绑定地址 (推荐保持默认) |
-| `GATEWAY_PORT` | `18789` | 网关端口 |
-| `TELEGRAM_BOT_TOKEN` | - | Telegram Bot Token (非交互模式必填) |
-| `API_KEY` | - | AI 模型 API Key (非交互模式必填) |
-| `API_BASE_URL` | `https://api.openai.com` | API 服务商地址 |
-
----
-
-## 🛡 Security Best Practices
-
-1. **默认本地绑定**: 网关默认绑定 `127.0.0.1`，仅允许本地访问
-2. **远程访问推荐**: 使用 SSH 隧道或 Nginx 反向代理 + HTTPS
-3. **配置备份**: 重装前自动备份，防止数据丢失
-4. **权限隔离**: 使用专用 `openclaw` 用户运行，非 root
-
----
-
-## 📚 Quick Commands
-
-```bash
-# 切换到 openclaw 用户
-su - openclaw
-
-# 查看服务状态
-pm2 status
-
-# 查看实时日志
-pm2 logs openclaw
-
-# 重启服务
-pm2 restart openclaw
-
-# 健康检查
-openclaw doctor
-
-# 查看可用技能
-openclaw skills list
-```
-
----
-
-## 🤝 Contributing
-
-欢迎提交 Issue 和 Pull Request！
-
----
-
-## 👨‍💻 Author
-
-**KnowHunters (知识猎人)**
-
-- GitHub: [@KnowHunters](https://github.com/KnowHunters)
-
----
-
-## 📄 License
-
-MIT License - Copyright (c) 2026 KnowHunters
-
-See [LICENSE](LICENSE) for details.
+- [OpenClaw](https://github.com/openclaw/openclaw) - 官方项目
+- [OpenClaw 中文版](https://clawd.org.cn/) - 中文本地化

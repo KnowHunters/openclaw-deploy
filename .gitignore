@@ -1,9 +1,12 @@
 # System files
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*~
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 
@@ -13,4 +16,20 @@ dist/
 
 # Env & Config (Don't commit secrets!)
 .env
+.env.local
 config.json
+*.secret
+
+# Temp files
+/tmp/
+*.tmp
+*.bak
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Test
+test-output/
+coverage/

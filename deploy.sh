@@ -25,14 +25,22 @@ set -e
 # 初始化
 # ============================================================================
 
-# 脚本目录
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+# 检测是否通过管道执行
+if [[ -t 0 ]]; then
+    # 本地执行
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+else
+    # 通过管道执行，创建临时目录
+    SCRIPT_DIR=$(mktemp -d)
+fi
 
 # 如果是通过 curl 管道执行，下载完整脚本
 if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
-    # 创建临时目录
-    TEMP_DIR=$(mktemp -d)
-    SCRIPT_DIR="$TEMP_DIR"
+    # 确保使用临时目录
+    if [[ -t 0 ]]; then
+        TEMP_DIR=$(mktemp -d)
+        SCRIPT_DIR="$TEMP_DIR"
+    fi
     
     echo "正在下载脚本..."
     
@@ -40,7 +48,7 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     BASE_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main"
     mkdir -p "$SCRIPT_DIR/lib"
     
-    local download_failed=false
+    download_failed=false
     for lib in ui utils detector installer wizard software skills health updater; do
         echo "  下载 ${lib}.sh..."
         if ! curl -fsSL "$BASE_URL/lib/${lib}.sh" -o "$SCRIPT_DIR/lib/${lib}.sh"; then
@@ -64,7 +72,7 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     
     # 清理函数
     cleanup() {
-        rm -rf "$TEMP_DIR" 2>/dev/null
+        [[ -n "$SCRIPT_DIR" ]] && [[ -d "$SCRIPT_DIR" ]] && rm -rf "$SCRIPT_DIR" 2>/dev/null
     }
     trap cleanup EXIT
 fi

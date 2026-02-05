@@ -89,13 +89,13 @@ create_openclaw_user() {
         return 1
     fi
     
-    # 添加到 sudo 组
-    if ui_confirm "是否给予 '$username' sudo 权限? (推荐)" "y"; then
-        if usermod -aG sudo "$username" 2>/dev/null || usermod -aG wheel "$username" 2>/dev/null; then
-            log_success "已添加 sudo 权限"
-        else
-            log_warning "添加 sudo 权限失败，可能需要手动配置"
-        fi
+    # 添加到 sudo 组 (默认添加，这是推荐的做法)
+    ui_spinner_start "正在配置 sudo 权限..."
+    if usermod -aG sudo "$username" 2>/dev/null || usermod -aG wheel "$username" 2>/dev/null; then
+        ui_spinner_success "已添加 sudo 权限"
+    else
+        ui_spinner_error "添加 sudo 权限失败"
+        log_warning "请手动执行: usermod -aG sudo $username"
     fi
     
     OPENCLAW_USER="$username"

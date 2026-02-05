@@ -282,9 +282,10 @@ detect_user() {
         return 1
     fi
     
-    # 检查 sudo 权限
+    # 检查 sudo 权限 (只是警告，不阻止继续)
     if ! has_sudo; then
         log_warning "当前用户没有 sudo 权限"
+        log_info "某些操作可能需要手动使用 sudo 执行"
     fi
     
     # 检查 home 目录
@@ -298,6 +299,7 @@ detect_user() {
         return 1
     fi
     
+    log_success "用户环境检测通过"
     log_debug "用户: $CURRENT_USER, Home: $HOME_DIR"
     return 0
 }

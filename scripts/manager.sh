@@ -8,13 +8,22 @@
 # ==============================================================================
 # [1] 全局配置与常量 (Global Config)
 # ==============================================================================
+# Bootstrap Variables (copied from install.sh for consistency)
 OPENCLAW_USER="${OPENCLAW_USER:-openclaw}"
 WORKSPACE_DIR="${WORKSPACE_DIR:-/home/$OPENCLAW_USER/openclaw-bot}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="/home/$OPENCLAW_USER/.openclaw/openclaw.json"
 ENV_FILE="$WORKSPACE_DIR/.env"
-ENV_FILE="$WORKSPACE_DIR/.env"
 CLAW_BIN="/home/$OPENCLAW_USER/.npm-global/bin/openclaw"
+INSTALL_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh"
+
+# 检测是否已安装
+check_installed() {
+    if [[ -f "/etc/systemd/system/openclaw.service" ]] || [[ -f "$CLAW_BIN" ]]; then
+        return 0
+    fi
+    return 1
+}
 
 # 颜色定义
 CYAN='\033[0;36m'
@@ -1120,6 +1129,13 @@ menu_softwares() {
 # [5] 主入口 (Main Entry)
 # ==============================================================================
 while true; do
+    # 如果未安装，直接显示安装向导
+    if ! check_installed; then
+        menu_install_wizard
+        continue
+    fi
+
+    # 已安装，显示完整控制面板
     header
     echo -e " ${GREEN}[0] 🚀 快速初始化向导 (Quick Start)${NC}"
     echo -e " ----------------------------------"

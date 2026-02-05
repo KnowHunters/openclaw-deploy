@@ -565,7 +565,7 @@ ui_kv_panel() {
     for item in "${items[@]}"; do
         local key="${item%%:*}"
         local value="${item#*:}"
-        printf "  │   %-16s %s\n" "$key" "$value"
+        printf "  │   %-16s %b\n" "$key" "$value"
     done
     
     echo -e "  └─────────────────────────────────────────────────────────┘"

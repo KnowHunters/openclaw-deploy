@@ -442,12 +442,12 @@ ui_select() {
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
-            read -rsn1 -t 0.01 key2 </dev/tty
+            read -rsn1 -t 0.05 key2 </dev/tty
             if [[ "$key2" == '[' ]]; then
-                read -rsn1 -t 0.01 key3 </dev/tty
+                read -rsn1 -t 0.05 key3 </dev/tty
                 key="$key2$key3"
             else
-                key=$'\x1b'  # 单独的 ESC 键
+                key=""  # 单独 ESC 忽略，避免误触退出
             fi
         fi
         
@@ -469,7 +469,7 @@ ui_select() {
                     return $idx
                 fi
                 ;;
-            q|Q|$'\x1b') # 退出
+            q|Q) # 退出
                 echo -ne "${CURSOR_SHOW}"
                 return 255
                 ;;
@@ -523,12 +523,12 @@ ui_multi_select() {
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
-            read -rsn1 -t 0.01 key2 </dev/tty
+            read -rsn1 -t 0.05 key2 </dev/tty
             if [[ "$key2" == '[' ]]; then
-                read -rsn1 -t 0.01 key3 </dev/tty
+                read -rsn1 -t 0.05 key3 </dev/tty
                 key="$key2$key3"
             else
-                key=$'\x1b'  # 单独的 ESC 键
+                key=""  # 单独 ESC 忽略，避免误触退出
             fi
         fi
         

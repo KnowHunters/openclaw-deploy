@@ -562,15 +562,27 @@ setup_infrastructure() {
     run_step "初始化默认配置" "
         mkdir -p $CONFIG_DIR
         if [ ! -f $CONFIG_DIR/openclaw.json ]; then
+            # 生成随机 Token (48字符 hex)
+            local generated_token=$(openssl rand -hex 24 2>/dev/null || head -c 24 /dev/urandom | od -A n -t x1 | tr -d ' \n')
+            
             cat > $CONFIG_DIR/openclaw.json <<JSON
 {
   "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "$generated_token"
+    },
     "port": $GATEWAY_PORT,
-    "host": "$GATEWAY_BIND",
-    "mode": "local"
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
   }
 }
 JSON
+            log_info "已生成默认配置 (Token: ${generated_token:0:6}...)"
         fi
         chown -R $OPENCLAW_USER:$OPENCLAW_USER $CONFIG_DIR
     "

@@ -623,7 +623,7 @@ show_completion() {
     echo -e "${GREEN}  🎉  部署成功！OpenClaw 服务已在后台运行${NC}"
     echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e " ${BOLD}� 系统信息:${NC}"
+    echo -e " ${BOLD}📊 系统信息:${NC}"
     echo -e "   - 用户: ${OPENCLAW_USER}"
     echo -e "   - 目录: ${WORKSPACE_DIR}"
     echo -e "   - 服务: openclaw (systemd)"

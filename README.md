@@ -29,8 +29,11 @@ bash reinstall.sh ubuntu 24.04
 ## ⚡ Quick Start
 
 ```bash
-# 下载并安装
-curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh -o install.sh && sudo bash install.sh
+# ⚡️ 新版安装 (推荐)
+bash <(curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/scripts/manager.sh)
+
+# 备用安装 (传统方式)
+bash <(curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/install.sh)
 ```
 
 <details>

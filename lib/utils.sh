@@ -302,6 +302,10 @@ detect_memory() {
     fi
     
     MEMORY_MB=$((mem_kb / 1024))
+    # 确保是有效的数字
+    if [[ ! "$MEMORY_MB" =~ ^[0-9]+$ ]]; then
+        MEMORY_MB=0
+    fi
     echo "$MEMORY_MB"
 }
 
@@ -315,6 +319,10 @@ detect_disk() {
     fi
     
     DISK_AVAILABLE_MB=$((available_kb / 1024))
+    # 确保是有效的数字
+    if [[ ! "$DISK_AVAILABLE_MB" =~ ^[0-9]+$ ]]; then
+        DISK_AVAILABLE_MB=0
+    fi
     echo "$DISK_AVAILABLE_MB"
 }
 
@@ -331,6 +339,10 @@ detect_cpu_cores() {
     fi
     
     CPU_CORES=$cores
+    # 确保是有效的数字
+    if [[ ! "$CPU_CORES" =~ ^[0-9]+$ ]]; then
+        CPU_CORES=1
+    fi
     echo "$cores"
 }
 
@@ -590,6 +602,15 @@ has_sudo() {
     sudo -n true 2>/dev/null
 }
 
+# 检查当前用户是否在 sudo 组
+user_in_sudo_group() {
+    local groups=$(groups "$CURRENT_USER" 2>/dev/null)
+    if [[ "$groups" == *"sudo"* ]] || [[ "$groups" == *"wheel"* ]] || [[ "$groups" == *"root"* ]]; then
+        return 0
+    fi
+    return 1
+}
+
 # 获取普通用户列表
 get_normal_users() {
     local min_uid=1000
@@ -779,7 +800,7 @@ export -f version_compare version_lt version_le version_gt version_ge
 export -f check_network download_file fetch_url
 export -f ensure_dir safe_write_file backup_file
 export -f jq_available json_get json_set
-export -f is_root has_sudo get_normal_users user_exists get_user_home
+export -f is_root has_sudo user_in_sudo_group get_normal_users user_exists get_user_home
 export -f has_systemd service_status service_is_running
 export -f trim to_lower to_upper random_string generate_token
 export -f get_term_explanation show_term_explanation

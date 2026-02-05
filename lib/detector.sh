@@ -282,8 +282,16 @@ detect_user() {
         return 1
     fi
     
-    # 检查 sudo 权限 (只是警告，不阻止继续)
-    if ! has_sudo; then
+    # 检查 sudo 权限
+    if has_sudo; then
+        # sudo -n 成功，无需密码或已有凭证
+        log_debug "用户拥有免密 sudo 权限或凭证已缓存"
+    elif user_in_sudo_group; then
+        # 在 sudo 组但 sudo -n 失败，说明需要密码
+        log_warning "用户拥有 sudo 权限 (需要密码)"
+        log_info "后续操作可能需要手动输入密码"
+    else
+        # 既不在 sudo 组也无法 sudo
         log_warning "当前用户没有 sudo 权限"
         log_info "某些操作可能需要手动使用 sudo 执行"
     fi

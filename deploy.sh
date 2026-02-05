@@ -99,14 +99,23 @@ ls -la "$SCRIPT_DIR/lib/" 2>/dev/null || echo "目录不存在"
 echo ""
 
 # 加载库文件
+echo "[DEBUG] Loading ui.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/ui.sh"
+echo "[DEBUG] Loading utils.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/utils.sh"
+echo "[DEBUG] Loading detector.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/detector.sh"
+echo "[DEBUG] Loading installer.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/installer.sh"
+echo "[DEBUG] Loading wizard.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/wizard.sh"
+echo "[DEBUG] Loading software.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/software.sh"
+echo "[DEBUG] Loading skills.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/skills.sh"
+echo "[DEBUG] Loading health.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/health.sh"
+echo "[DEBUG] Loading updater.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/updater.sh"
 
 # ============================================================================

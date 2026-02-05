@@ -286,8 +286,28 @@ install_nodejs_linux() {
     # 检测包管理器
     if command_exists apt-get; then
         # Debian/Ubuntu
-        curl -fsSL "https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x" | sudo -E bash - >> "$LOG_FILE" 2>&1
+        log_info "正在配置 Node.js 源..."
+        
+        # 1. 清理旧的 nodesource 源，防止冲突
+        sudo rm -f /etc/apt/sources.list.d/nodesource.list
+        
+        # 2. 下载并运行 setup 脚本 (分开执行以捕获错误)
+        local setup_script="/tmp/nodesource_setup.sh"
+        if curl -fsSL "https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x" -o "$setup_script"; then
+             bash "$setup_script" >> "$LOG_FILE" 2>&1
+        else
+             log_error "下载 Node.js setup 脚本失败"
+             return 1
+        fi
+        
+        # 3. 记录当前的 apt policy (方便调试为什么不更新)
+        echo "Wait for checking apt-cache policy nodejs..." >> "$LOG_FILE"
+        apt-cache policy nodejs >> "$LOG_FILE" 2>&1 || true
+        
+        # 4. 安装
+        log_info "执行 apt install nodejs..."
         sudo apt-get install -y nodejs >> "$LOG_FILE" 2>&1
+        
     elif command_exists dnf; then
         # Fedora/RHEL 8+
         curl -fsSL "https://rpm.nodesource.com/setup_${MIN_NODE_VERSION}.x" | sudo bash - >> "$LOG_FILE" 2>&1

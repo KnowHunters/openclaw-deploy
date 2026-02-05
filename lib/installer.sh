@@ -600,6 +600,8 @@ WantedBy=multi-user.target
     sudo systemctl enable openclaw
     
     log_success "systemd 服务配置完成"
+    HAS_SYSTEMD=true
+    SYSTEMD_SERVICE_CONFIGURED=true
 }
 
 # ============================================================================

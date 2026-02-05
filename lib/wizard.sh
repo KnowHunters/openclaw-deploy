@@ -95,8 +95,10 @@ run_config_wizard() {
     # 2. Systemd 服务注册
     echo ""
     ui_log_step "注册系统服务..."
-    
-    if [[ "$HAS_SYSTEMD" == true ]]; then
+
+    if [[ "$SYSTEMD_SERVICE_CONFIGURED" == true ]]; then
+        log_info "systemd 服务已配置，跳过重复注册"
+    elif has_systemd; then
         if ui_confirm "是否注册为 Systemd 服务 (开机自启)?" "y"; then
             install_systemd_service
         fi
@@ -115,7 +117,6 @@ run_config_wizard() {
             log_warning "未检测到活跃的 Systemd 环境"
             if ui_confirm "如果您确定系统支持 Systemd，是否强制注册服务?" "n"; then
                 install_systemd_service
-                HAS_SYSTEMD=true # 标记为 true 以便后续提示正确
             else
                 log_info "跳过服务注册"
             fi

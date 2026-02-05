@@ -33,7 +33,7 @@ run_config_wizard() {
     # 提示用户
     ui_panel "配置向导说明" \
         "OpenClaw onboard 配置完成后会自动启动 Web 后台。" \
-        "当您完成配置并看到 'Web interface started' 提示后，" \
+        "当您看到 ${C_GREEN}'Onboarding complete'${C_RESET} 提示后，" \
         "${C_WARNING}请按 [Ctrl+C] 停止 onboard${C_RESET}，脚本将自动继续后续步骤。" \
         "(如权限修正、Systemd 服务注册等)"
         

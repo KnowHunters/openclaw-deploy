@@ -17,7 +17,7 @@
 ## 🚀 快速开始
 
 ```bash
-curl -fsSL https://your-repo/deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/deploy.sh | bash
 ```
 
 ## 📁 项目结构

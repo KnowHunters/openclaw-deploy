@@ -4,7 +4,7 @@
 # ============================================================================
 # 
 # 使用方法:
-#   curl -fsSL https://your-repo/deploy.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/deploy.sh | bash
 #   或
 #   bash deploy.sh
 #
@@ -21,8 +21,6 @@
 
 set -e
 
-# 版本标识（用于调试）
-echo "[DEBUG] Script version: 2024-02-05-v3"
 
 # ============================================================================
 # 初始化
@@ -33,18 +31,15 @@ if [[ -p /dev/stdin ]] || [[ ! -t 0 ]]; then
     # 通过管道执行，创建临时目录
     SCRIPT_DIR=$(mktemp -d)
     IS_PIPED=true
-    echo "[DEBUG] Pipe execution detected, SCRIPT_DIR=$SCRIPT_DIR"
 else
     # 本地执行
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
     IS_PIPED=false
-    echo "[DEBUG] Local execution detected, SCRIPT_DIR=$SCRIPT_DIR"
 fi
 
 # 如果库文件不存在，需要下载
 if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     echo "正在下载脚本..."
-    echo "临时目录: $SCRIPT_DIR"
     
     # 下载库文件
     BASE_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main"
@@ -92,30 +87,15 @@ if [[ "$IS_PIPED" == true ]]; then
     trap cleanup EXIT
 fi
 
-# 调试信息
-echo "调试: SCRIPT_DIR=$SCRIPT_DIR"
-echo "调试: 检查文件 $SCRIPT_DIR/lib/ui.sh"
-ls -la "$SCRIPT_DIR/lib/" 2>/dev/null || echo "目录不存在"
-echo ""
-
 # 加载库文件
-echo "[DEBUG] Loading ui.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/ui.sh"
-echo "[DEBUG] Loading utils.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/utils.sh"
-echo "[DEBUG] Loading detector.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/detector.sh"
-echo "[DEBUG] Loading installer.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/installer.sh"
-echo "[DEBUG] Loading wizard.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/wizard.sh"
-echo "[DEBUG] Loading software.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/software.sh"
-echo "[DEBUG] Loading skills.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/skills.sh"
-echo "[DEBUG] Loading health.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/health.sh"
-echo "[DEBUG] Loading updater.sh, SCRIPT_DIR=$SCRIPT_DIR"
 source "$SCRIPT_DIR/lib/updater.sh"
 
 # ============================================================================

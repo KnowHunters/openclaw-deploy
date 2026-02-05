@@ -438,17 +438,24 @@ ui_select() {
         echo -e "\n  ${S_DIM}↑/↓ 选择  Enter 确认  1-9 直选  q 退出${C_RESET}"
         
         # 读取按键
-        read -rsn1 key </dev/tty
+        if ! read -rsn1 key </dev/tty; then
+            # 读取失败时直接重试，避免误判退出/确认
+            continue
+        fi
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
-            read -rsn1 -t 0.05 key2 </dev/tty
-            if [[ "$key2" == '[' ]]; then
-                read -rsn1 -t 0.05 key3 </dev/tty
-                key="$key2$key3"
+            local rest=""
+            read -rsn2 -t 0.1 rest </dev/tty
+            if [[ -n "$rest" ]]; then
+                key="$rest"
             else
-                key=""  # 单独 ESC 忽略，避免误触退出
+                key="__ignore__"  # 单独 ESC 忽略
             fi
+        fi
+
+        if [[ "$UI_DEBUG_KEYS" == "1" ]]; then
+            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$(printf '%s' "$key" | xxd -p)" >> "$LOG_FILE"
         fi
         
         case "$key" in
@@ -461,6 +468,8 @@ ui_select() {
             '') # Enter
                 echo -ne "${CURSOR_SHOW}"
                 return $selected
+                ;;
+            '__ignore__')
                 ;;
             [1-9])
                 local idx=$((key - 1))
@@ -519,17 +528,23 @@ ui_multi_select() {
         echo -e "\n  ${S_DIM}↑/↓ 移动  Space 选择  Enter 确认  a 全选  n 全不选${C_RESET}"
         
         # 读取按键
-        read -rsn1 key </dev/tty
+        if ! read -rsn1 key </dev/tty; then
+            continue
+        fi
         
         # 处理转义序列（方向键）
         if [[ "$key" == $'\x1b' ]]; then
-            read -rsn1 -t 0.05 key2 </dev/tty
-            if [[ "$key2" == '[' ]]; then
-                read -rsn1 -t 0.05 key3 </dev/tty
-                key="$key2$key3"
+            local rest=""
+            read -rsn2 -t 0.1 rest </dev/tty
+            if [[ -n "$rest" ]]; then
+                key="$rest"
             else
-                key=""  # 单独 ESC 忽略，避免误触退出
+                key="__ignore__"  # 单独 ESC 忽略
             fi
+        fi
+
+        if [[ "$UI_DEBUG_KEYS" == "1" ]]; then
+            printf "KEY_DEBUG raw=%q hex=%s\n" "$key" "$(printf '%s' "$key" | xxd -p)" >> "$LOG_FILE"
         fi
         
         case "$key" in
@@ -541,6 +556,8 @@ ui_multi_select() {
                 ;;
             ' ') # 空格 - 切换选中
                 selected[$current]=$((1 - ${selected[$current]}))
+                ;;
+            '__ignore__')
                 ;;
             a) # 全选
                 for i in "${!options[@]}"; do

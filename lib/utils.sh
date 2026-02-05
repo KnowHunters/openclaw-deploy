@@ -17,9 +17,13 @@ _UTILS_LOADED=1
 DEPLOY_VERSION="2.0.0"
 DEPLOY_NAME="OpenClaw Deploy"
 
-# 目录路径
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# 目录路径 (只在未设置时才设置，避免覆盖 deploy.sh 中的值)
+if [[ -z "$SCRIPT_DIR" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+if [[ -z "$PROJECT_ROOT" ]]; then
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+fi
 
 # 用户相关
 CURRENT_USER="$(whoami)"

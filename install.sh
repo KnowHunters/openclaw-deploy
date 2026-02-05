@@ -566,7 +566,8 @@ setup_infrastructure() {
 {
   "gateway": {
     "port": $GATEWAY_PORT,
-    "host": "$GATEWAY_BIND"
+    "host": "$GATEWAY_BIND",
+    "mode": "local"
   }
 }
 JSON

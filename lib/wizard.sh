@@ -54,8 +54,8 @@ run_config_wizard() {
     # 恢复原来的信号处理
     trap 'handle_interrupt' INT
     
-    # 130 是 SIGINT (Ctrl+C)，我们将其视为用户正常完成配置后的退出
-    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]]; then
+    # 130 是 SIGINT (Ctrl+C)，1 是可能的通用错误退出（也可能是手动中断）
+    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]] || [[ $exit_code -eq 1 ]]; then
         log_success "配置步骤结束"
     else
         log_warning "onboard 异常退出 (Code: $exit_code)，尝试继续执行..."
@@ -120,11 +120,20 @@ run_config_wizard() {
     
     # 4. 最终完成
     echo ""
-    ui_panel "配置全部完成!" \
-        "您现在可以使用 ${C_GREEN}systemctl start openclaw${C_RESET} 启动服务" \
-        "或者直接运行 ${C_GREEN}openclaw start${C_RESET}" \
-        " " \
-        "查看日志: journalctl -u openclaw -f"
+    
+    if [[ "$HAS_SYSTEMD" == true ]]; then
+        ui_panel "配置全部完成!" \
+            "您现在可以使用 ${C_GREEN}systemctl start openclaw${C_RESET} 启动服务" \
+            "或者直接运行 ${C_GREEN}openclaw start${C_RESET}" \
+            " " \
+            "查看日志: journalctl -u openclaw -f"
+    else
+        ui_panel "配置全部完成!" \
+            "由于系统不支持 Systemd，请手动启动服务：" \
+            "${C_GREEN}nohup openclaw gateway > openclaw.log 2>&1 &${C_RESET}" \
+            " " \
+            "或者前台运行: ${C_GREEN}openclaw start${C_RESET}"
+    fi
     
     ui_wait_key "按任意键返回主菜单..."
     

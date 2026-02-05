@@ -677,6 +677,7 @@ run_installation() {
 }
 
 # 显示安装完成信息
+# 显示安装完成信息及交互菜单
 show_installation_complete() {
     local cli_name="openclaw"
     [[ "$INSTALL_VERSION" == "chinese" ]] && cli_name="openclaw-cn"
@@ -687,12 +688,6 @@ show_installation_complete() {
     echo -e "  ${C_SUCCESS}恭喜！OpenClaw 安装成功！${C_RESET}"
     echo ""
     
-    ui_panel "快速开始" \
-        "启动服务: ${C_CYAN}sudo systemctl start openclaw${C_RESET}" \
-        "查看状态: ${C_CYAN}$cli_name status${C_RESET}" \
-        "运行诊断: ${C_CYAN}$cli_name doctor${C_RESET}" \
-        "配置向导: ${C_CYAN}$cli_name onboard${C_RESET}"
-    
     if [[ -f "$OPENCLAW_CONFIG" ]]; then
         local port=$(json_get "$OPENCLAW_CONFIG" ".gateway.port")
         port=${port:-18789}
@@ -700,7 +695,84 @@ show_installation_complete() {
         echo ""
     fi
     
-    ui_tip "如果需要帮助，运行 '$cli_name help' 或查看文档"
+    ui_wait_key "按任意键进入管理菜单..."
+    
+    # 进入交互菜单
+    while true; do
+        ui_select "快速管理菜单 (v${DEPLOY_VERSION})" \
+            "🚀 启动服务 (Start)" \
+            "📊 查看状态 (Status)" \
+            "🏥 运行诊断 (Doctor)" \
+            "⚙️ 配置向导 (Onboard)" \
+            "📝 查看日志 (Logs)" \
+            "🚪 退出脚本 (Exit)"
+            
+        local choice=$?
+        
+        case $choice in
+            0) # Start
+                echo ""
+                if [[ "$HAS_SYSTEMD" == true ]]; then
+                    sudo systemctl start openclaw
+                    if service_is_running "openclaw"; then
+                         log_success "服务已启动"
+                    else
+                         log_error "启动失败，请查看日志"
+                    fi
+                else
+                    log_info "正在尝试后台启动..."
+                    mkdir -p "$HOME/.openclaw/logs"
+                    nohup $cli_name gateway > "$HOME/.openclaw/logs/openclaw.log" 2>&1 &
+                    log_success "已发送启动指令"
+                fi
+                ui_wait_key
+                ;;
+            1) # Status
+                echo ""
+                if [[ "$HAS_SYSTEMD" == true ]]; then
+                    systemctl status openclaw --no-pager
+                else
+                    if pgrep -f "openclaw" >/dev/null; then
+                        log_success "OpenClaw 进程运行中 (PID: $(pgrep -f "openclaw" | head -1))"
+                    else
+                        log_warning "未检测到 OpenClaw 进程"
+                    fi
+                fi
+                ui_wait_key
+                ;;
+            2) # Doctor
+                echo ""
+                $cli_name doctor
+                ui_wait_key
+                ;;
+            3) # Onboard
+                run_config_wizard
+                ;;
+            4) # Logs
+                echo ""
+                log_info "正在打开日志 (按 Ctrl+C 退出)..."
+                sleep 1
+                if [[ "$HAS_SYSTEMD" == true ]]; then
+                    journalctl -u openclaw -f
+                else
+                    local log_path="$HOME/.openclaw/logs/openclaw.log"
+                    [[ ! -f "$log_path" ]] && log_path="openclaw.log"
+                    
+                    if [[ -f "$log_path" ]]; then
+                        tail -f "$log_path"
+                    else
+                         log_error "未找到日志文件"
+                         ui_wait_key
+                    fi
+                fi
+                ;;
+            5|255) # Exit
+                echo ""
+                log_success "感谢使用 OpenClaw Deploy!"
+                break
+                ;;
+        esac
+    done
 }
 
 # ============================================================================

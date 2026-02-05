@@ -21,19 +21,22 @@
 
 set -e
 
+# 交互模式默认开启，必要时自动降级
+INTERACTIVE=true
 
 # ============================================================================
 # 初始化
 # ============================================================================
 
 # 检测是否通过管道执行并设置脚本目录
-if [[ -p /dev/stdin ]] || [[ ! -t 0 ]]; then
+SCRIPT_PATH="${BASH_SOURCE[0]:-$0}"
+if [[ -p /dev/stdin ]] || [[ ! -f "$SCRIPT_PATH" ]]; then
     # 通过管道执行，创建临时目录
     SCRIPT_DIR=$(mktemp -d)
     IS_PIPED=true
 else
     # 本地执行
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" 2>/dev/null && pwd)"
     IS_PIPED=false
 fi
 
@@ -98,6 +101,12 @@ source "$SCRIPT_DIR/lib/software.sh"
 source "$SCRIPT_DIR/lib/skills.sh"
 source "$SCRIPT_DIR/lib/health.sh"
 source "$SCRIPT_DIR/lib/updater.sh"
+
+# 如果当前环境没有可用 TTY，自动切换为非交互模式
+if [[ "$UI_HAS_TTY" != "true" ]]; then
+    INTERACTIVE=false
+    AUTO_INSTALL=true
+fi
 
 # 显示版本信息，确认脚本已更新
 log_info "OpenClaw Deploy v$DEPLOY_VERSION (Build: $(date +%Y-%m-%d))"
@@ -472,6 +481,13 @@ main() {
     # 运行环境检测
     run_full_detection
     
+    # 非交互模式下自动执行默认流程
+    if [[ "$INTERACTIVE" != "true" ]]; then
+        show_detection_result
+        run_non_interactive_flow
+        exit $?
+    fi
+    
     # 首次运行欢迎
     local first_run=false
     if [[ "$HAS_OPENCLAW" != true ]] && [[ "$HAS_OPENCLAW_CN" != true ]]; then
@@ -494,6 +510,43 @@ main() {
     
     # 进入主菜单
     show_main_menu
+}
+
+# ============================================================================
+# 非交互流程
+# ============================================================================
+
+run_non_interactive_flow() {
+    log_info "非交互模式：自动执行默认流程"
+    
+    # 选择版本默认值
+    if [[ -z "$INSTALL_VERSION" ]]; then
+        if [[ "$HAS_OPENCLAW_CN" == "true" ]] && [[ "$HAS_OPENCLAW" != "true" ]]; then
+            INSTALL_VERSION="chinese"
+        else
+            INSTALL_VERSION="international"
+        fi
+    fi
+    
+    case "$SUGGESTED_MODE" in
+        fresh)
+            INSTALL_MODE="fresh"
+            log_info "自动安装版本: $INSTALL_VERSION"
+            run_installation "fresh"
+            ;;
+        upgrade)
+            log_info "检测到可升级版本，开始升级"
+            run_upgrade
+            ;;
+        reinstall)
+            log_info "已是最新版本，运行诊断与修复"
+            run_diagnostics
+            ;;
+        *)
+            log_warning "无法确定安装模式，跳过自动流程"
+            return 1
+            ;;
+    esac
 }
 
 # ============================================================================

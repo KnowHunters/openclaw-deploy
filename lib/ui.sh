@@ -20,6 +20,13 @@ else
     UI_COLOR_SUPPORT=false
 fi
 
+# 终端交互能力检测（用于非交互环境安全降级）
+if [[ -t 0 ]] && [[ -t 1 ]] && [[ -r /dev/tty ]]; then
+    UI_HAS_TTY=true
+else
+    UI_HAS_TTY=false
+fi
+
 # 基础颜色
 if [[ "$UI_COLOR_SUPPORT" == true ]]; then
     # 主色调
@@ -351,6 +358,11 @@ ui_confirm() {
     
     [[ "$default" == "y" ]] && hint="Y/n"
     
+    if [[ "$UI_HAS_TTY" != "true" ]]; then
+        [[ "$default" =~ ^[Yy]$ ]]
+        return $?
+    fi
+
     echo -ne "  ${C_WARNING}?${C_RESET} ${message} ${S_DIM}[$hint]${C_RESET}: "
     read -r answer </dev/tty
     answer="${answer:-$default}"
@@ -363,6 +375,10 @@ ui_confirm() {
 ui_confirm_dangerous() {
     local action="$1"
     local description="$2"
+
+    if [[ "$UI_HAS_TTY" != "true" ]]; then
+        return 1
+    fi
     
     echo ""
     echo -e "  ${C_ERROR}╔═══════════════════════════════════════════════════════════╗${C_RESET}"
@@ -395,6 +411,10 @@ ui_select() {
     local options=("$@")
     local selected=0
     local key
+
+    if [[ "$UI_HAS_TTY" != "true" ]]; then
+        return 255
+    fi
     
     # 隐藏光标
     echo -ne "${CURSOR_HIDE}"
@@ -675,6 +695,10 @@ ui_wait_key() {
     local message="${1:-按任意键继续...}"
     echo ""
     echo -ne "  ${S_DIM}${message}${C_RESET}"
+    if [[ "$UI_HAS_TTY" != "true" ]]; then
+        echo ""
+        return 0
+    fi
     read -rsn1 </dev/tty
     echo ""
 }

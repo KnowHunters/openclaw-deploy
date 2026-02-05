@@ -609,6 +609,8 @@ WantedBy=multi-user.target
 # 运行安装
 run_installation() {
     local mode="${1:-$INSTALL_MODE}"
+    local cli_name="openclaw"
+    [[ "$INSTALL_VERSION" == "chinese" ]] && cli_name="openclaw-cn"
     
     # 再次检测环境，防状态变化或首次检测不准
     detect_dependencies
@@ -656,17 +658,29 @@ run_installation() {
     save_progress "permissions_set"
     
     # 5. 配置 systemd 服务
-    if ui_confirm "是否配置 systemd 服务? (推荐)" "y"; then
-        install_systemd_service
+    if [[ "$INTERACTIVE" != "true" ]]; then
+        if has_sudo && has_systemd; then
+            install_systemd_service
+        else
+            log_warning "非交互模式下跳过 systemd 配置（无 sudo 或不支持 systemd）"
+        fi
+    else
+        if ui_confirm "是否配置 systemd 服务? (推荐)" "y"; then
+            install_systemd_service
+        fi
     fi
     
     save_progress "service_configured"
     
     # 6. 运行配置向导
-    if ui_confirm "是否运行配置向导?" "y"; then
-        if ! run_config_wizard; then
-            log_warning "配置向导未正常完成，您可以稍后运行 '$cli_name onboard' 手动配置"
-            # 不让 wizard 失败阻断后续的清理流程
+    if [[ "$INTERACTIVE" != "true" ]]; then
+        log_info "非交互模式下跳过配置向导，可稍后运行 '$cli_name onboard'"
+    else
+        if ui_confirm "是否运行配置向导?" "y"; then
+            if ! run_config_wizard; then
+                log_warning "配置向导未正常完成，您可以稍后运行 '$cli_name onboard' 手动配置"
+                # 不让 wizard 失败阻断后续的清理流程
+            fi
         fi
     fi
     
@@ -800,6 +814,22 @@ run_upgrade() {
         log_info "已备份配置文件"
     fi
     
+    # 非交互模式：后台执行升级，避免阻塞
+    if [[ "$INTERACTIVE" != "true" ]]; then
+        if service_is_running "openclaw"; then
+            log_warning "非交互模式下跳过停止服务，请在升级完成后手动重启服务"
+        fi
+        
+        local temp_log
+        temp_log=$(mktemp)
+        log_info "非交互模式下在后台执行升级..."
+        nohup npm update -g "$package_name" > "$temp_log" 2>&1 &
+        local upgrade_pid=$!
+        log_info "升级进程 PID: $upgrade_pid"
+        log_info "升级日志: $temp_log"
+        return 0
+    fi
+    
     # 停止服务
     if service_is_running "openclaw"; then
         ui_spinner_start "停止服务..."
@@ -845,9 +875,18 @@ run_upgrade() {
     fi
     
     # 重启服务
-    if ui_confirm "是否启动服务?" "y"; then
-        sudo systemctl start openclaw
-        log_success "服务已启动"
+    if [[ "$INTERACTIVE" != "true" ]]; then
+        if has_sudo && has_systemd; then
+            sudo systemctl start openclaw
+            log_success "服务已启动"
+        else
+            log_warning "非交互模式下跳过启动服务（无 sudo 或不支持 systemd）"
+        fi
+    else
+        if ui_confirm "是否启动服务?" "y"; then
+            sudo systemctl start openclaw
+            log_success "服务已启动"
+        fi
     fi
     
     # 显示升级摘要

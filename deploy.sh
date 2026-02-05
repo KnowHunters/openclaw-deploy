@@ -24,6 +24,17 @@ set -e
 # 交互模式默认开启，必要时自动降级
 INTERACTIVE=true
 
+# 在交互菜单中安全执行命令，避免 errexit 导致直接退出
+run_safely() {
+    local was_errexit=0
+    [[ $- == *e* ]] && was_errexit=1
+    set +e
+    "$@"
+    local rc=$?
+    [[ $was_errexit -eq 1 ]] && set -e
+    return $rc
+}
+
 # ============================================================================
 # 初始化
 # ============================================================================
@@ -170,33 +181,33 @@ show_main_menu() {
         case $choice in
             0)  # 安装/升级
                 if [[ "$HAS_OPENCLAW" != true ]] && [[ "$HAS_OPENCLAW_CN" != true ]]; then
-                    run_install_flow
+                    run_safely run_install_flow || log_warning "安装流程未完成，您可以稍后重试"
                 elif [[ "$SUGGESTED_MODE" == "upgrade" ]]; then
-                    run_upgrade
+                    run_safely run_upgrade || log_warning "升级未完成，请查看日志后重试"
                     ui_wait_key
                 else
-                    run_reinstall_flow
+                    run_safely run_reinstall_flow || log_warning "重新安装未完成，您可以稍后重试"
                 fi
                 ;;
             1)  # 配置向导
-                run_config_wizard
+                run_safely run_config_wizard || log_warning "配置向导未完成，您可以稍后重试"
                 ui_wait_key
                 ;;
             2)  # 技能管理
-                show_skills_manager
+                run_safely show_skills_manager || log_warning "技能管理未完成，您可以稍后重试"
                 ;;
             3)  # 软件安装
-                show_software_manager
+                run_safely show_software_manager || log_warning "软件安装未完成，您可以稍后重试"
                 ui_wait_key
                 ;;
             4)  # 状态检查
-                show_health_manager
+                run_safely show_health_manager || log_warning "状态检查未完成，您可以稍后重试"
                 ;;
             5)  # 检查更新
-                show_update_menu
+                run_safely show_update_menu || log_warning "更新检查未完成，您可以稍后重试"
                 ;;
             6)  # 帮助
-                show_help
+                run_safely show_help || log_warning "帮助页面未正常显示"
                 ;;
             7|255)  # 退出
                 echo ""

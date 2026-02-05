@@ -810,12 +810,26 @@ run_upgrade() {
     # 升级
     ui_spinner_start "正在升级 $cli_name..."
     
-    if npm update -g "$package_name" >> "$LOG_FILE" 2>&1; then
+    # 使用临时文件捕获输出
+    local temp_log=$(mktemp)
+    if npm update -g "$package_name" > "$temp_log" 2>&1; then
         ui_spinner_success "升级成功"
+        cat "$temp_log" >> "$LOG_FILE"
     else
         ui_spinner_error "升级失败"
+        echo ""
+        log_error "升级过程中出现错误："
+        echo ""
+        # 显示错误信息
+        tail -20 "$temp_log" | while IFS= read -r line; do
+            echo "  $line"
+        done
+        echo ""
+        cat "$temp_log" >> "$LOG_FILE"
+        rm -f "$temp_log"
         return 1
     fi
+    rm -f "$temp_log"
     
     # 显示新版本
     local new_version=$($cli_name --version 2>/dev/null | head -1)
@@ -835,6 +849,16 @@ run_upgrade() {
         sudo systemctl start openclaw
         log_success "服务已启动"
     fi
+    
+    # 显示升级摘要
+    echo ""
+    ui_divider
+    log_success "升级完成！"
+    echo ""
+    log_info "版本: $new_version"
+    log_info "配置: $OPENCLAW_CONFIG"
+    log_info "日志: $LOG_FILE"
+    echo ""
     
     return 0
 }

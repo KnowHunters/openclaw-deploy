@@ -164,6 +164,7 @@ show_main_menu() {
                     run_install_flow
                 elif [[ "$SUGGESTED_MODE" == "upgrade" ]]; then
                     run_upgrade
+                    ui_wait_key
                 else
                     run_reinstall_flow
                 fi

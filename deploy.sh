@@ -25,23 +25,19 @@ set -e
 # 初始化
 # ============================================================================
 
-# 检测是否通过管道执行
-if [[ -t 0 ]]; then
-    # 本地执行
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
-else
+# 检测是否通过管道执行并设置脚本目录
+if [[ -p /dev/stdin ]] || [[ ! -t 0 ]]; then
     # 通过管道执行，创建临时目录
     SCRIPT_DIR=$(mktemp -d)
+    IS_PIPED=true
+else
+    # 本地执行
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+    IS_PIPED=false
 fi
 
-# 如果是通过 curl 管道执行，下载完整脚本
+# 如果库文件不存在，需要下载
 if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
-    # 确保使用临时目录
-    if [[ -t 0 ]]; then
-        TEMP_DIR=$(mktemp -d)
-        SCRIPT_DIR="$TEMP_DIR"
-    fi
-    
     echo "正在下载脚本..."
     
     # 下载库文件
@@ -64,13 +60,16 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
         echo "  git clone https://github.com/KnowHunters/openclaw-deploy.git"
         echo "  cd openclaw-deploy"
         echo "  bash deploy.sh"
+        [[ "$IS_PIPED" == true ]] && rm -rf "$SCRIPT_DIR" 2>/dev/null
         exit 1
     fi
     
     echo "下载完成！"
     echo ""
-    
-    # 清理函数
+fi
+
+# 清理函数（仅在管道执行时清理临时目录）
+if [[ "$IS_PIPED" == true ]]; then
     cleanup() {
         [[ -n "$SCRIPT_DIR" ]] && [[ -d "$SCRIPT_DIR" ]] && rm -rf "$SCRIPT_DIR" 2>/dev/null
     }

@@ -39,27 +39,58 @@ run_config_wizard() {
         
     ui_wait_key "按任意键启动配置..."
     
-    # 运行原生 onboard
-    echo "启动配置工具..."
-    
-    # 临时忽略 INT 信号 (在此脚本层面)，让 onboard 接收 Ctrl+C 退出
-    # 而 deploy.sh 本身不退出，而是捕获错误码并继续
-    trap '' INT
-    
-    set +e # 临时允许返回非零状态
-    $cli_name onboard
-    local exit_code=$?
-    set -e # 恢复严格模式
-    
-    # 恢复原来的信号处理
-    trap 'handle_interrupt' INT
-    
-    # 130 是 SIGINT (Ctrl+C)，我们将其视为用户正常完成配置后的退出
-    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]]; then
-        log_success "配置步骤结束"
-    else
-        log_warning "onboard 异常退出 (Code: $exit_code)，尝试继续执行..."
-    fi
+    # 循环允许用户重试
+    while true; do
+        # 运行原生 onboard
+        echo "启动配置工具..."
+        
+        # 临时忽略 INT 信号 (在此脚本层面)，让 onboard 接收 Ctrl+C 退出
+        trap '' INT
+        
+        set +e
+        $cli_name onboard
+        local exit_code=$?
+        set -e
+        
+        trap 'handle_interrupt' INT
+        
+        # 检测是否生成了配置文件
+        local config_created=false
+        local possible_configs=(
+            "$HOME/.openclaw/openclaw.json"
+            "$HOME/.config/openclaw/openclaw.json"
+        )
+        
+        for conf in "${possible_configs[@]}"; do
+            if [[ -f "$conf" ]]; then
+                config_created=true
+                break
+            fi
+        done
+        
+        # 判定结果
+        if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]]; then
+            if [[ "$config_created" == true ]]; then
+                log_success "配置步骤结束"
+                break
+            else
+                log_warning "配置工具已退出，但未检测到配置文件 (openclaw.json)。"
+                if ! ui_confirm "这通常意味着您取消了配置。是否重新尝试?" "y"; then
+                    log_warning "跳过配置步骤"
+                    break # 用户选择不重试，跳出
+                fi
+                # 用户选择重试，继续循环
+                echo ""
+                echo "正在重新启动..."
+                sleep 1
+            fi
+        else
+            log_warning "onboard 异常退出 (Code: $exit_code)"
+            if ! ui_confirm "配置过程可能出错。是否重试?" "y"; then
+                 break
+            fi
+        fi
+    done
     
     # 配置后增强
     echo ""

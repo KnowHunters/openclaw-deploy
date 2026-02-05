@@ -623,11 +623,17 @@ show_completion() {
     echo -e "${GREEN}  🎉  部署成功！OpenClaw 服务已在后台运行${NC}"
     echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${BOLD}📡 访问信息${NC}"
-    echo -e "   • 本地地址 : http://$GATEWAY_BIND:$GATEWAY_PORT"
-    echo -e "   • 公网地址 : http://$(curl -s ifconfig.me):$GATEWAY_PORT"
+    echo -e " ${BOLD}� 系统信息:${NC}"
+    echo -e "   - 用户: ${OPENCLAW_USER}"
+    echo -e "   - 目录: ${WORKSPACE_DIR}"
+    echo -e "   - 服务: openclaw (systemd)"
+    echo -e "   - 端口: ${final_port}"
+    if [ -n "$final_token" ]; then
+        echo -e "   - 访问: ${CYAN}${BOLD}${access_url}${NC}"
+    fi
     echo ""
-    echo -e "${BOLD}安全与权限${NC}"
+    
+    echo -e " ${BOLD}💡 常用命令:${NC}"
     echo -e "   服务运行用户: ${CYAN}$OPENCLAW_USER${NC} (非 Root)"
     echo -e "   手动调试时，请${RED}务必切换用户${NC}以避免权限错误："
     echo -e "   切换指令: ${GREEN}su - $OPENCLAW_USER${NC}"

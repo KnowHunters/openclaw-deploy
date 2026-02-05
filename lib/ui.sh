@@ -419,11 +419,16 @@ ui_select() {
         # 读取按键
         read -rsn1 key </dev/tty
         
+        # 处理转义序列（方向键）
+        if [[ "$key" == $'\x1b' ]]; then
+            read -rsn2 key </dev/tty
+        fi
+        
         case "$key" in
-            A|k) # 上
+            '[A'|A|k) # 上
                 ((selected > 0)) && ((selected--))
                 ;;
-            B|j) # 下
+            '[B'|B|j) # 下
                 ((selected < ${#options[@]}-1)) && ((selected++))
                 ;;
             '') # Enter
@@ -482,17 +487,22 @@ ui_multi_select() {
         # 读取按键
         read -rsn1 key </dev/tty
         
+        # 处理转义序列（方向键）
+        if [[ "$key" == $'\x1b' ]]; then
+            read -rsn2 key </dev/tty
+        fi
+        
         case "$key" in
-            A|k) # 上
+            '[A'|A|k) # 上
                 ((current > 0)) && ((current--))
                 ;;
-            B|j) # 下
+            '[B'|B|j) # 下
                 ((current < ${#options[@]}-1)) && ((current++))
                 ;;
             ' ') # 空格 - 切换选中
                 selected[$current]=$((1 - ${selected[$current]}))
                 ;;
-            a|A) # 全选
+            a) # 全选
                 for i in "${!options[@]}"; do
                     selected[$i]=1
                 done

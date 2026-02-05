@@ -276,9 +276,10 @@ ui_input() {
     local default="$2"
     local result
     
-    echo -ne "  ${S_BOLD}${prompt}${C_RESET}"
-    [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}"
-    echo -ne ": "
+    # 提示输出到 stderr，避免被 $() 捕获
+    echo -ne "  ${S_BOLD}${prompt}${C_RESET}" >&2
+    [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
+    echo -ne ": " >&2
     
     read -r result
     echo "${result:-$default}"
@@ -290,11 +291,9 @@ ui_input_secret() {
     local prompt="$1"
     local result
     
-    echo -ne "  ${S_BOLD}${prompt}${C_RESET}"
-    echo -ne " ${S_DIM}(输入时不显示)${C_RESET}: "
-    
+    echo -ne "  ${S_BOLD}${prompt}${C_RESET}: " >&2
     read -rs result
-    echo ""
+    echo "" >&2
     echo "$result"
 }
 
@@ -307,22 +306,23 @@ ui_input_with_help() {
     local result
     
     while true; do
-        echo -ne "  ${S_BOLD}${prompt}${C_RESET}"
-        [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}"
-        echo -ne " ${S_DIM}(? 查看帮助)${C_RESET}: "
+        # 提示输出到 stderr，避免被 $() 捕获
+        echo -ne "  ${S_BOLD}${prompt}${C_RESET}" >&2
+        [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
+        echo -ne " ${S_DIM}(? 查看帮助)${C_RESET}: " >&2
         
         read -r result
         
         if [[ "$result" == "?" ]]; then
-            echo ""
-            echo -e "  ${C_INFO}┌─────────────────────────────────────────────────────────┐${C_RESET}"
-            echo -e "  ${C_INFO}│${C_RESET} ${EMOJI_LIGHT} ${S_BOLD}帮助${C_RESET}"
-            echo -e "  ${C_INFO}├─────────────────────────────────────────────────────────┤${C_RESET}"
+            echo "" >&2
+            echo -e "  ${C_INFO}┌─────────────────────────────────────────────────────────┐${C_RESET}" >&2
+            echo -e "  ${C_INFO}│${C_RESET} ${EMOJI_LIGHT} ${S_BOLD}帮助${C_RESET}" >&2
+            echo -e "  ${C_INFO}├─────────────────────────────────────────────────────────┤${C_RESET}" >&2
             echo "$help_text" | while IFS= read -r line; do
-                echo -e "  ${C_INFO}│${C_RESET}   $line"
+                echo -e "  ${C_INFO}│${C_RESET}   $line" >&2
             done
-            echo -e "  ${C_INFO}└─────────────────────────────────────────────────────────┘${C_RESET}"
-            echo ""
+            echo -e "  ${C_INFO}└─────────────────────────────────────────────────────────┘${C_RESET}" >&2
+            echo "" >&2
         else
             break
         fi

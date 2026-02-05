@@ -40,9 +40,27 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     BASE_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main"
     mkdir -p "$SCRIPT_DIR/lib"
     
+    local download_failed=false
     for lib in ui utils detector installer wizard software skills health updater; do
-        curl -fsSL "$BASE_URL/lib/${lib}.sh" -o "$SCRIPT_DIR/lib/${lib}.sh" 2>/dev/null || true
+        echo "  下载 ${lib}.sh..."
+        if ! curl -fsSL "$BASE_URL/lib/${lib}.sh" -o "$SCRIPT_DIR/lib/${lib}.sh"; then
+            echo "错误: 下载 ${lib}.sh 失败"
+            download_failed=true
+            break
+        fi
     done
+    
+    if [[ "$download_failed" == true ]]; then
+        echo ""
+        echo "下载失败，请尝试克隆仓库后本地运行："
+        echo "  git clone https://github.com/KnowHunters/openclaw-deploy.git"
+        echo "  cd openclaw-deploy"
+        echo "  bash deploy.sh"
+        exit 1
+    fi
+    
+    echo "下载完成！"
+    echo ""
     
     # 清理函数
     cleanup() {

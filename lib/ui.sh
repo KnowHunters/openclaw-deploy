@@ -427,14 +427,15 @@ ui_select() {
         echo -e "\n  ${S_BOLD}${title}${C_RESET}\n"
         
         for i in "${!options[@]}"; do
+            local num=$((i + 1))
             if [[ $i -eq $selected ]]; then
-                echo -e "  ${C_PRIMARY}${ICON_ARROW} ${options[$i]}${C_RESET}"
+                echo -e "  ${C_PRIMARY}${ICON_ARROW} ${num}. ${options[$i]}${C_RESET}"
             else
-                echo -e "    ${S_DIM}${options[$i]}${C_RESET}"
+                echo -e "    ${S_DIM}${num}. ${options[$i]}${C_RESET}"
             fi
         done
         
-        echo -e "\n  ${S_DIM}↑/↓ 选择  Enter 确认  q 退出${C_RESET}"
+        echo -e "\n  ${S_DIM}↑/↓ 选择  Enter 确认  1-9 直选  q 退出${C_RESET}"
         
         # 读取按键
         read -rsn1 key </dev/tty
@@ -460,6 +461,13 @@ ui_select() {
             '') # Enter
                 echo -ne "${CURSOR_SHOW}"
                 return $selected
+                ;;
+            [1-9])
+                local idx=$((key - 1))
+                if (( idx >= 0 && idx < ${#options[@]} )); then
+                    echo -ne "${CURSOR_SHOW}"
+                    return $idx
+                fi
                 ;;
             q|Q|$'\x1b') # 退出
                 echo -ne "${CURSOR_SHOW}"

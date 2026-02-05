@@ -236,6 +236,43 @@ detect_openclaw() {
         fi
     fi
     
+    # 深度检测: 如果命令不存在，尝试通过 npm 全局包查找
+    # 这解决了用户虽然安装了但不在 PATH 中的问题
+    if [[ "$HAS_OPENCLAW" != true ]] && command_exists npm; then
+        log_debug "尝试通过 npm package.json 深度检测..."
+        local npm_root=$(npm root -g 2>/dev/null)
+        
+        if [[ -n "$npm_root" ]]; then
+            # 检查国际版
+            if [[ -f "$npm_root/openclaw/package.json" ]]; then
+                local pkg_ver=$(json_get "$npm_root/openclaw/package.json" ".version")
+                if [[ -n "$pkg_ver" ]]; then
+                    HAS_OPENCLAW=true
+                    OPENCLAW_VERSION="$pkg_ver"
+                    OPENCLAW_CLI_PATH="$npm_root/openclaw/bin/run" # 猜测路径
+                    log_debug "深度检测发现 OpenClaw: $OPENCLAW_VERSION (at $npm_root)"
+                    
+                    # 尝试加入 PATH
+                    local bin_path="$npm_root/../bin"
+                    if [[ -d "$bin_path" ]] && [[ ":$PATH:" != *":$bin_path:"* ]]; then
+                        export PATH="$bin_path:$PATH"
+                        log_debug "自动修复 PATH: $bin_path"
+                    fi
+                fi
+            fi
+            
+            # 检查中文版
+            if [[ "$HAS_OPENCLAW" != true ]] && [[ -f "$npm_root/openclaw-cn/package.json" ]]; then
+                local pkg_ver=$(json_get "$npm_root/openclaw-cn/package.json" ".version")
+                if [[ -n "$pkg_ver" ]]; then
+                     HAS_OPENCLAW_CN=true
+                     OPENCLAW_VERSION="$pkg_ver"
+                     log_debug "深度检测发现 OpenClaw CN: $OPENCLAW_VERSION"
+                fi
+            fi
+        fi
+    fi
+    
     # 检测配置文件
     if [[ -f "$OPENCLAW_CONFIG" ]]; then
         OPENCLAW_CONFIG_EXISTS=true

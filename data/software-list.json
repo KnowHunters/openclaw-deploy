@@ -1,0 +1,204 @@
+{
+  "categories": {
+    "required": {
+      "name": "必需组件",
+      "description": "OpenClaw 运行必需的组件"
+    },
+    "recommended": {
+      "name": "推荐组件",
+      "description": "提升使用体验的推荐组件"
+    },
+    "media": {
+      "name": "媒体工具",
+      "description": "处理音视频和图像的工具"
+    },
+    "dev": {
+      "name": "开发工具",
+      "description": "开发和调试相关工具"
+    }
+  },
+  "software": [
+    {
+      "id": "nodejs",
+      "name": "Node.js v22",
+      "description": "OpenClaw 运行环境",
+      "category": "required",
+      "check": "node --version",
+      "install": {
+        "apt": "nodejs",
+        "dnf": "nodejs",
+        "brew": "node"
+      },
+      "minVersion": "22.0.0",
+      "url": "https://nodejs.org/"
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "description": "版本控制系统",
+      "category": "required",
+      "check": "git --version",
+      "install": {
+        "apt": "git",
+        "dnf": "git",
+        "brew": "git"
+      },
+      "url": "https://git-scm.com/"
+    },
+    {
+      "id": "curl",
+      "name": "curl",
+      "description": "网络请求工具",
+      "category": "required",
+      "check": "curl --version",
+      "install": {
+        "apt": "curl",
+        "dnf": "curl",
+        "brew": "curl"
+      },
+      "url": "https://curl.se/"
+    },
+    {
+      "id": "jq",
+      "name": "jq",
+      "description": "JSON 处理工具",
+      "category": "recommended",
+      "check": "jq --version",
+      "install": {
+        "apt": "jq",
+        "dnf": "jq",
+        "brew": "jq"
+      },
+      "url": "https://stedolan.github.io/jq/"
+    },
+    {
+      "id": "ripgrep",
+      "name": "ripgrep",
+      "description": "快速搜索工具",
+      "category": "recommended",
+      "check": "rg --version",
+      "install": {
+        "apt": "ripgrep",
+        "dnf": "ripgrep",
+        "brew": "ripgrep"
+      },
+      "url": "https://github.com/BurntSushi/ripgrep"
+    },
+    {
+      "id": "fd",
+      "name": "fd-find",
+      "description": "快速文件查找",
+      "category": "recommended",
+      "check": "fd --version",
+      "install": {
+        "apt": "fd-find",
+        "dnf": "fd-find",
+        "brew": "fd"
+      },
+      "url": "https://github.com/sharkdp/fd"
+    },
+    {
+      "id": "htop",
+      "name": "htop",
+      "description": "系统监控工具",
+      "category": "recommended",
+      "check": "htop --version",
+      "install": {
+        "apt": "htop",
+        "dnf": "htop",
+        "brew": "htop"
+      },
+      "url": "https://htop.dev/"
+    },
+    {
+      "id": "tree",
+      "name": "tree",
+      "description": "目录树显示",
+      "category": "recommended",
+      "check": "tree --version",
+      "install": {
+        "apt": "tree",
+        "dnf": "tree",
+        "brew": "tree"
+      }
+    },
+    {
+      "id": "ffmpeg",
+      "name": "ffmpeg",
+      "description": "音视频处理",
+      "category": "media",
+      "check": "ffmpeg -version",
+      "install": {
+        "apt": "ffmpeg",
+        "dnf": "ffmpeg",
+        "brew": "ffmpeg"
+      },
+      "url": "https://ffmpeg.org/"
+    },
+    {
+      "id": "imagemagick",
+      "name": "ImageMagick",
+      "description": "图像处理工具",
+      "category": "media",
+      "check": "convert --version",
+      "install": {
+        "apt": "imagemagick",
+        "dnf": "ImageMagick",
+        "brew": "imagemagick"
+      },
+      "url": "https://imagemagick.org/"
+    },
+    {
+      "id": "tesseract",
+      "name": "Tesseract OCR",
+      "description": "文字识别",
+      "category": "media",
+      "check": "tesseract --version",
+      "install": {
+        "apt": "tesseract-ocr",
+        "dnf": "tesseract",
+        "brew": "tesseract"
+      },
+      "url": "https://github.com/tesseract-ocr/tesseract"
+    },
+    {
+      "id": "python3",
+      "name": "Python 3",
+      "description": "Python 环境",
+      "category": "dev",
+      "check": "python3 --version",
+      "install": {
+        "apt": "python3",
+        "dnf": "python3",
+        "brew": "python3"
+      },
+      "url": "https://www.python.org/"
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "description": "容器运行时",
+      "category": "dev",
+      "check": "docker --version",
+      "install": {
+        "apt": "docker.io",
+        "dnf": "docker",
+        "brew": "docker"
+      },
+      "url": "https://www.docker.com/"
+    },
+    {
+      "id": "chromium",
+      "name": "Chromium",
+      "description": "无头浏览器",
+      "category": "dev",
+      "check": "chromium --version",
+      "install": {
+        "apt": "chromium-browser",
+        "dnf": "chromium",
+        "brew": "chromium"
+      },
+      "url": "https://www.chromium.org/"
+    }
+  ]
+}

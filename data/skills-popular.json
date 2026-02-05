@@ -1,0 +1,140 @@
+{
+  "lastUpdated": "2026-02-05",
+  "skills": [
+    {
+      "name": "weather-forecast",
+      "description": "获取全球天气预报，支持多城市、多天预报",
+      "author": "openclaw-community",
+      "downloads": 5200,
+      "rating": 4.8,
+      "tags": ["weather", "forecast", "utility"],
+      "requires": ["API Key: OpenWeatherMap (免费)"]
+    },
+    {
+      "name": "web-search",
+      "description": "网络搜索，支持 Google、Bing、DuckDuckGo",
+      "author": "openclaw-community",
+      "downloads": 4800,
+      "rating": 4.7,
+      "tags": ["search", "web", "utility"],
+      "requires": ["API Key: Brave Search (可选)"]
+    },
+    {
+      "name": "reminder",
+      "description": "提醒和日程管理，支持定时提醒",
+      "author": "openclaw-community",
+      "downloads": 4200,
+      "rating": 4.6,
+      "tags": ["reminder", "schedule", "productivity"],
+      "requires": []
+    },
+    {
+      "name": "translator",
+      "description": "多语言翻译，支持 100+ 语言",
+      "author": "openclaw-community",
+      "downloads": 3800,
+      "rating": 4.5,
+      "tags": ["translate", "language", "utility"],
+      "requires": []
+    },
+    {
+      "name": "calculator",
+      "description": "数学计算，支持复杂表达式和单位转换",
+      "author": "openclaw-community",
+      "downloads": 3500,
+      "rating": 4.4,
+      "tags": ["math", "calculator", "utility"],
+      "requires": []
+    },
+    {
+      "name": "note-taker",
+      "description": "笔记记录和管理，支持分类和搜索",
+      "author": "openclaw-community",
+      "downloads": 3200,
+      "rating": 4.5,
+      "tags": ["notes", "productivity", "memory"],
+      "requires": []
+    },
+    {
+      "name": "image-gen",
+      "description": "AI 图像生成，支持 DALL-E、Midjourney 风格",
+      "author": "openclaw-community",
+      "downloads": 2800,
+      "rating": 4.3,
+      "tags": ["image", "ai", "creative"],
+      "requires": ["API Key: OpenAI (DALL-E)"]
+    },
+    {
+      "name": "code-helper",
+      "description": "代码辅助，支持多语言代码生成和解释",
+      "author": "openclaw-community",
+      "downloads": 2500,
+      "rating": 4.4,
+      "tags": ["code", "programming", "dev"],
+      "requires": []
+    },
+    {
+      "name": "news-reader",
+      "description": "新闻阅读，支持 RSS 订阅和摘要",
+      "author": "openclaw-community",
+      "downloads": 2200,
+      "rating": 4.2,
+      "tags": ["news", "rss", "reading"],
+      "requires": []
+    },
+    {
+      "name": "file-manager",
+      "description": "文件管理，支持文件操作和搜索",
+      "author": "openclaw-community",
+      "downloads": 2000,
+      "rating": 4.1,
+      "tags": ["file", "management", "utility"],
+      "requires": []
+    },
+    {
+      "name": "task-tracker",
+      "description": "任务跟踪，支持待办事项和项目管理",
+      "author": "openclaw-community",
+      "downloads": 1800,
+      "rating": 4.3,
+      "tags": ["task", "todo", "productivity"],
+      "requires": []
+    },
+    {
+      "name": "email-assistant",
+      "description": "邮件助手，支持邮件摘要和回复建议",
+      "author": "openclaw-community",
+      "downloads": 1600,
+      "rating": 4.0,
+      "tags": ["email", "assistant", "productivity"],
+      "requires": ["IMAP/SMTP 配置"]
+    },
+    {
+      "name": "youtube-summary",
+      "description": "YouTube 视频摘要，支持字幕提取",
+      "author": "openclaw-community",
+      "downloads": 1500,
+      "rating": 4.2,
+      "tags": ["youtube", "video", "summary"],
+      "requires": []
+    },
+    {
+      "name": "stock-tracker",
+      "description": "股票追踪，支持实时行情和提醒",
+      "author": "openclaw-community",
+      "downloads": 1400,
+      "rating": 4.1,
+      "tags": ["stock", "finance", "tracker"],
+      "requires": ["API Key: Alpha Vantage (免费)"]
+    },
+    {
+      "name": "habit-tracker",
+      "description": "习惯追踪，支持打卡和统计",
+      "author": "openclaw-community",
+      "downloads": 1200,
+      "rating": 4.0,
+      "tags": ["habit", "tracker", "productivity"],
+      "requires": []
+    }
+  ]
+}

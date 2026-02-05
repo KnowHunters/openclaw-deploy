@@ -107,8 +107,6 @@ run_config_wizard() {
     
     if [[ "$HAS_SYSTEMD" == true ]]; then
         if ui_confirm "是否注册为 Systemd 服务 (开机自启)?" "y"; then
-            install_systemd_service
-        fi
     else
         local os_type=$(detect_os)
         if [[ "$os_type" == "wsl" ]]; then
@@ -121,7 +119,13 @@ run_config_wizard() {
 3. 在 Windows CMD 中重启 WSL: wsl --shutdown
 4. 重新进入 WSL 即可生效"
         else
-            log_info "系统不支持 Systemd，跳过服务注册"
+            log_warning "未检测到活跃的 Systemd 环境"
+            if ui_confirm "如果您确定系统支持 Systemd，是否强制注册服务?" "n"; then
+                install_systemd_service
+                HAS_SYSTEMD=true # 标记为 true 以便后续提示正确
+            else
+                log_info "跳过服务注册"
+            fi
         fi
     fi
     

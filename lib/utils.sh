@@ -14,7 +14,7 @@ _UTILS_LOADED=1
 # ============================================================================
 
 # 版本信息
-DEPLOY_VERSION="2.1.12"
+DEPLOY_VERSION="2.1.13"
 DEPLOY_NAME="OpenClaw Deploy"
 
 # 目录路径 (只在未设置时才设置，避免覆盖 deploy.sh 中的值)
@@ -651,8 +651,26 @@ get_user_home() {
 # ============================================================================
 
 # 检查 systemd 是否可用
+# 检查 systemd 是否可用
 has_systemd() {
-    command_exists systemctl && [[ -d /run/systemd/system ]]
+    # 方法 1: 检查 /run/systemd/system 目录
+    if [[ -d /run/systemd/system ]]; then
+        return 0
+    fi
+    
+    # 方法 2: 检查 PID 1
+    if [[ -f /proc/1/comm ]] && grep -q systemd /proc/1/comm; then
+        return 0
+    fi
+    
+    # 方法 3: 尝试运行 systemctl (最可靠但可能慢)
+    if command_exists systemctl; then
+        if systemctl list-units --type=service --no-pager >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    
+    return 1
 }
 
 # 检查服务状态

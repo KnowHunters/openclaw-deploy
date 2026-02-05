@@ -84,7 +84,8 @@ create_openclaw_user() {
     echo -e "  ${S_DIM}(输入时不会显示，这是正常的)${C_RESET}"
     echo ""
     
-    if ! passwd "$username"; then
+    # 重定向 passwd 的输入到 /dev/tty，确保在管道执行时也能输入密码
+    if ! passwd "$username" </dev/tty; then
         log_error "设置密码失败"
         return 1
     fi

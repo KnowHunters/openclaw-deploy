@@ -612,7 +612,7 @@ run_installation() {
                 return 1
             fi
         else
-            log_error "OpenClaw 需要 Node.js v${MIN_NODE_VERSION}+"
+            log_error "OpenClaw 需要 Node.js v${MIN_NODE_VERSION}+ (检测到: ${NODE_VERSION:-未安装})"
             return 1
         fi
     fi

@@ -107,6 +107,8 @@ run_config_wizard() {
     
     if [[ "$HAS_SYSTEMD" == true ]]; then
         if ui_confirm "是否注册为 Systemd 服务 (开机自启)?" "y"; then
+            install_systemd_service
+        fi
     else
         local os_type=$(detect_os)
         if [[ "$os_type" == "wsl" ]]; then

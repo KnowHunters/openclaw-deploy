@@ -59,7 +59,7 @@
 | **配置生成** | 最小化配置 (仅 Gateway) | 完整配置 (所有模块) |
 | **环境检测** | 无 | 智能检测 API Key 和系统资源 |
 | **配置验证** | 无 | JSON 语法 + 必需字段 + 值验证 |
-| **用户引导** | 需手动运行 `openclaw onboard` | 可选的交互式配置向导 |
+| **用户引导** | 需手动运行 `openclaw configure` | 可选的交互式配置向导 |
 | **工作区初始化** | 需手动创建 | 自动创建完整模板 |
 | **环境变量** | 分散管理 | 统一管理 (~/.openclaw/env) |
 | **诊断** | 手动运行 `openclaw doctor` | 安装后自动诊断 |
@@ -99,7 +99,7 @@
 
 ✅ **OpenClaw CLI 命令**:
 - `openclaw gateway` - 启动网关
-- `openclaw onboard` - 配置向导
+- `openclaw configure` - 配置向导
 - `openclaw doctor` - 诊断修复
 - `openclaw skills list` - 技能列表
 - `openclaw status` - 查看状态

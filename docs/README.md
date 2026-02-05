@@ -60,14 +60,14 @@ curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/in
 
 安装完成后，脚本会自动启动配置向导：
 
-1.  **自动运行** `openclaw onboard` (5秒倒计时后)
+1.  **自动运行** `openclaw configure` (5秒倒计时后)
 2.  **配置完成** 后，脚本会自动启动服务并保存 pm2 进程
 
 无需手动执行任何额外命令。
 
 如果需要手动重新配置：
 ```bash
-sudo -u openclaw openclaw onboard
+sudo -u openclaw openclaw configure
 ```
 
 

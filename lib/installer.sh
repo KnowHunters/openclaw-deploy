@@ -674,11 +674,11 @@ run_installation() {
     
     # 6. 运行配置向导
     if [[ "$INTERACTIVE" != "true" ]]; then
-        log_info "非交互模式下跳过配置向导，可稍后运行 '$cli_name onboard'"
+        log_info "非交互模式下跳过配置向导，可稍后运行 '$cli_name configure'"
     else
         if ui_confirm "是否运行配置向导?" "y"; then
             if ! run_config_wizard; then
-                log_warning "配置向导未正常完成，您可以稍后运行 '$cli_name onboard' 手动配置"
+                log_warning "配置向导未正常完成，您可以稍后运行 '$cli_name configure' 手动配置"
                 # 不让 wizard 失败阻断后续的清理流程
             fi
         fi
@@ -720,7 +720,7 @@ show_installation_complete() {
             "🚀 启动服务 (Start)" \
             "📊 查看状态 (Status)" \
             "🏥 运行诊断 (Doctor)" \
-            "⚙️ 配置向导 (Onboard)" \
+            "⚙️ 配置向导 (Configure)" \
             "📝 查看日志 (Logs)" \
             "🚪 退出脚本 (Exit)"
             
@@ -762,7 +762,7 @@ show_installation_complete() {
                 $cli_name doctor
                 ui_wait_key
                 ;;
-            3) # Onboard
+            3) # Configure
                 run_config_wizard
                 ;;
             4) # Logs

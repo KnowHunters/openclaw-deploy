@@ -614,7 +614,7 @@ official_cli_menu() {
         echo -e "${GRAY}直接调用官方指令。注意: 部分指令可能会覆盖现有配置。${NC}"
         echo ""
         echo "  1) openclaw configure   (基础配置问答)"
-        echo "  2) openclaw onboard     (全流程向导 - 慎用)"
+        echo "  2) openclaw configure     (全流程向导 - 慎用)"
         echo "  3) openclaw doctor      (官方诊断)"
         echo "  4) openclaw listing     (查看所有模型)"
         echo ""
@@ -627,7 +627,7 @@ official_cli_menu() {
                 echo -e "${RED}警告: 此操作可能会重置部分配置。确定继续吗? [y/N]${NC}"
                 read -p "> " confirm
                 if [[ $confirm =~ ^[Yy]$ ]]; then
-                    run_as_user_shell "$CLAW_BIN onboard"
+                    run_as_user_shell "$CLAW_BIN configure"
                 fi
                 pause ;;
             3) run_as_user_shell "$CLAW_BIN doctor"; pause ;;

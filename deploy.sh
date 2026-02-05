@@ -387,7 +387,7 @@ show_help() {
     openclaw status       查看状态
     openclaw doctor       运行诊断
     openclaw gateway      启动 Gateway
-    openclaw onboard      运行配置向导
+    openclaw configure      运行配置向导
 
   更多信息:
 

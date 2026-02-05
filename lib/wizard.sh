@@ -3,7 +3,7 @@
 # OpenClaw Deploy 2.0 - Configuration Wizard
 # ============================================================================
 # 交互式配置向导，引导用户完成 OpenClaw 配置
-# v2.1.3: 使用原生 onboard + 自动增强环境
+# v2.1.3: 使用原生 configure + 自动增强环境
 # ============================================================================
 
 # 防止重复加载
@@ -32,33 +32,24 @@ run_config_wizard() {
     
     # 提示用户
     ui_panel "配置向导说明" \
-        "OpenClaw onboard 配置完成后会自动启动 Web 后台。" \
-        "当您看到 ${C_GREEN}'Onboarding complete'${C_RESET} 提示后，" \
-        "${C_WARNING}请按 [Ctrl+C] 停止 onboard${C_RESET}，脚本将自动继续后续步骤。" \
-        "(如权限修正、Systemd 服务注册等)"
+        "OpenClaw configure 配置完成后会自动退出并继续后续步骤。" \
+        "接下来脚本会进行权限修正、Systemd 服务注册等优化。"
         
     ui_wait_key "按任意键启动配置..."
     
-    # 运行原生 onboard
+    # 运行原生 configure
     echo "启动配置工具..."
     
-    # 临时忽略 INT 信号 (在此脚本层面)，让 onboard 接收 Ctrl+C 退出
-    # 而 deploy.sh 本身不退出，而是捕获错误码并继续
-    trap '' INT
-    
     set +e # 临时允许返回非零状态
-    $cli_name onboard < /dev/tty
+    $cli_name configure < /dev/tty
     local exit_code=$?
     set -e # 恢复严格模式
     
-    # 恢复原来的信号处理
-    trap 'handle_interrupt' INT
-    
-    # 130 是 SIGINT (Ctrl+C)，1 是可能的通用错误退出（也可能是手动中断）
-    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]] || [[ $exit_code -eq 1 ]]; then
+    # 0 为正常退出，1 可能是通用错误码
+    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 1 ]]; then
         log_success "配置步骤结束"
     else
-        log_warning "onboard 异常退出 (Code: $exit_code)，尝试继续执行..."
+        log_warning "configure 异常退出 (Code: $exit_code)，尝试继续执行..."
     fi
     
     # 配置后增强

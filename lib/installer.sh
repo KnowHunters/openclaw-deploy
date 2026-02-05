@@ -178,10 +178,15 @@ prompt_switch_user() {
     echo -e "  └─────────────────────────────────────────────────────────┘"
     echo ""
     echo -e "  切换用户后，运行以下命令继续安装："
-    echo -e "  ${C_CYAN}curl -fsSL https://your-repo/deploy.sh | bash${C_RESET}"
+    echo -e "  ${C_CYAN}curl -fsSL https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main/deploy.sh | bash${C_RESET}"
     echo ""
     
     ui_wait_key
+    
+    # 提示用户切换后，直接退出脚本
+    echo ""
+    log_info "请切换用户后重新运行脚本"
+    exit 0
 }
 
 # ============================================================================

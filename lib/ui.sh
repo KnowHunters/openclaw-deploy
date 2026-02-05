@@ -411,6 +411,11 @@ ui_select() {
     local options=("$@")
     local selected=0
     local key
+    local was_errexit=0
+
+    [[ $- == *e* ]] && was_errexit=1
+    set +e
+    trap '[[ $was_errexit -eq 1 ]] && set -e' RETURN
 
     if [[ "$UI_HAS_TTY" != "true" ]]; then
         return 255
@@ -494,7 +499,7 @@ ui_select() {
         # 移动光标回到菜单开始位置
         local lines=$((${#options[@]} + 5))
         for ((i=0; i<lines; i++)); do
-            echo -ne "${CURSOR_UP}${CLEAR_LINE}"
+            echo -ne "${CURSOR_UP}${CLEAR_LINE}" || true
         done
     done
 }
@@ -508,6 +513,11 @@ ui_multi_select() {
     local options=("$@")
     local current=0
     local key
+    local was_errexit=0
+
+    [[ $- == *e* ]] && was_errexit=1
+    set +e
+    trap '[[ $was_errexit -eq 1 ]] && set -e' RETURN
     
     # 初始化选中状态数组
     local selected=()
@@ -602,7 +612,7 @@ ui_multi_select() {
         # 移动光标回到菜单开始位置
         local lines=$((${#options[@]} + 5))
         for ((i=0; i<lines; i++)); do
-            echo -ne "${CURSOR_UP}${CLEAR_LINE}"
+            echo -ne "${CURSOR_UP}${CLEAR_LINE}" || true
         done
     done
 }

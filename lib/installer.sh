@@ -798,6 +798,11 @@ show_installation_complete() {
 
 # 运行升级
 run_upgrade() {
+    local was_errexit=0
+    [[ $- == *e* ]] && was_errexit=1
+    set +e
+    trap 'ui_spinner_stop 2>/dev/null; [[ $was_errexit -eq 1 ]] && set -e' RETURN
+
     ui_section_title "升级 OpenClaw" "$EMOJI_REFRESH"
     
     local cli_name="openclaw"

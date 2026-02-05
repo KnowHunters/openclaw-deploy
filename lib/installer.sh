@@ -311,6 +311,13 @@ install_nodejs_linux() {
         if [[ -f /etc/apt/sources.list.d/nodesource.list ]]; then
             echo "Repo file content:" >> "$LOG_FILE"
             cat /etc/apt/sources.list.d/nodesource.list >> "$LOG_FILE"
+            
+            # 创建 APT Pinning 强制使用 Nodesource 源 (优先级 1001)
+            # 这解决系统自带 nodejs 版本干扰的问题
+            log_info "配置 APT 优先级..."
+            echo "Package: nodejs" | sudo tee /etc/apt/preferences.d/nodesource > /dev/null
+            echo "Pin: origin deb.nodesource.com" | sudo tee -a /etc/apt/preferences.d/nodesource > /dev/null
+            echo "Pin-Priority: 1001" | sudo tee -a /etc/apt/preferences.d/nodesource > /dev/null
         else
             log_warning "NodeSource 源文件未创建!"
         fi

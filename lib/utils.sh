@@ -14,7 +14,7 @@ _UTILS_LOADED=1
 # ============================================================================
 
 # 版本信息
-DEPLOY_VERSION="2.0.6"
+DEPLOY_VERSION="2.0.7"
 DEPLOY_NAME="OpenClaw Deploy"
 
 # 目录路径 (只在未设置时才设置，避免覆盖 deploy.sh 中的值)

@@ -930,10 +930,4 @@ run_config_wizard() {
 # 导出
 # ============================================================================
 
-export -f wizard_step_providers wizard_step_models wizard_step_channels
-export -f wizard_step_gateway wizard_step_optimization wizard_step_confirm
-export -f configure_provider_anthropic configure_provider_openai
-export -f configure_provider_deepseek configure_provider_google configure_provider_ollama
-export -f configure_channel_telegram configure_channel_whatsapp configure_channel_discord
-export -f generate_config_files generate_openclaw_json generate_env_file generate_workspace_templates
 export -f run_config_wizard

@@ -87,6 +87,12 @@ if [[ "$IS_PIPED" == true ]]; then
     trap cleanup EXIT
 fi
 
+# 调试信息
+echo "调试: SCRIPT_DIR=$SCRIPT_DIR"
+echo "调试: 检查文件 $SCRIPT_DIR/lib/ui.sh"
+ls -la "$SCRIPT_DIR/lib/" 2>/dev/null || echo "目录不存在"
+echo ""
+
 # 加载库文件
 source "$SCRIPT_DIR/lib/ui.sh"
 source "$SCRIPT_DIR/lib/utils.sh"

@@ -123,6 +123,27 @@ check_system_support() {
 detect_dependencies() {
     log_step "检测依赖环境..."
     
+    # 尝试找到 npm 全局目录并添加到 PATH
+    # 这对于通过 pipe 运行的非交互式 shell 非常重要
+    local common_npm_paths=(
+        "$HOME/.npm-global/bin"
+        "$HOME/.npm-packages/bin"
+        "/usr/local/bin"
+        "/usr/bin"
+    )
+    
+    # 如果 node 存在，尝试获取 npm prefix
+    if command -v npm >/dev/null 2>&1; then
+        common_npm_paths+=("$(npm get prefix 2>/dev/null)/bin")
+    fi
+    
+    for path in "${common_npm_paths[@]}"; do
+        if [[ -d "$path" ]] && [[ ":$PATH:" != *":$path:"* ]]; then
+            export PATH="$path:$PATH"
+            log_debug "已添加 PATH: $path"
+        fi
+    done
+    
     # Node.js
     # Node.js
     if command_exists node; then

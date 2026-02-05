@@ -55,18 +55,34 @@ run_config_wizard() {
     fi
     
     # 提示用户
-    ui_panel "配置向导即将开始" \
-        "OpenClaw 提供了强大的原生配置工具 (onboard)。" \
-        "即将启动该工具为您完成核心配置。" \
-        "配置完成后，此脚本将自动优化系统权限和服务。"
+    ui_panel "配置向导说明" \
+        "OpenClaw onboard 配置完成后会自动启动 Web 后台。" \
+        "当您完成配置并看到 'Web interface started' 提示后，" \
+        "${C_WARNING}请按 [Ctrl+C] 停止 onboard${C_RESET}，脚本将自动继续后续步骤。" \
+        "(如权限修正、Systemd 服务注册等)"
         
-    ui_wait_key "按任意键开始配置..."
+    ui_wait_key "按任意键启动配置..."
     
     # 运行原生 onboard
     echo "启动配置工具..."
-    if ! $cli_name onboard; then
-        log_error "配置过程中断或失败"
-        return 1
+    
+    # 临时忽略 INT 信号 (在此脚本层面)，让 onboard 接收 Ctrl+C 退出
+    # 而 deploy.sh 本身不退出，而是捕获错误码并继续
+    trap '' INT
+    
+    set +e # 临时允许返回非零状态
+    $cli_name onboard
+    local exit_code=$?
+    set -e # 恢复严格模式
+    
+    # 恢复原来的信号处理
+    trap 'handle_interrupt' INT
+    
+    # 130 是 SIGINT (Ctrl+C)，我们将其视为用户正常完成配置后的退出
+    if [[ $exit_code -eq 0 ]] || [[ $exit_code -eq 130 ]]; then
+        log_success "配置步骤结束"
+    else
+        log_warning "onboard 异常退出 (Code: $exit_code)，尝试继续执行..."
     fi
     
     # 配置后增强

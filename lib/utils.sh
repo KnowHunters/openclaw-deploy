@@ -296,7 +296,8 @@ detect_memory() {
     local mem_kb=0
     
     if [[ -f /proc/meminfo ]]; then
-        mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+        # 使用 || true 防止 grep 失败导致脚本退出
+        mem_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || echo 0)
     elif command -v sysctl &>/dev/null; then
         mem_kb=$(($(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1024))
     fi
@@ -315,7 +316,8 @@ detect_disk() {
     local available_kb=0
     
     if command -v df &>/dev/null; then
-        available_kb=$(df -k "$path" 2>/dev/null | tail -1 | awk '{print $4}')
+        # 使用 || true 防止命令链失败
+        available_kb=$(df -k "$path" 2>/dev/null | tail -1 | awk '{print $4}' || echo 0)
     fi
     
     DISK_AVAILABLE_MB=$((available_kb / 1024))
@@ -331,11 +333,15 @@ detect_cpu_cores() {
     local cores=1
     
     if [[ -f /proc/cpuinfo ]]; then
-        cores=$(grep -c ^processor /proc/cpuinfo)
+        # grep -c 如果没有匹配到会返回 exit code 1，这将导致脚本在 set -e 模式下退出
+        # 所以必须加上 || echo 0 或 || true
+        cores=$(grep -c ^processor /proc/cpuinfo || echo 1)
+        # 如果 grep 返回 0 (没有找到 processor)，我们默认至少有 1 个核心
+        [[ "$cores" == "0" ]] && cores=1
     elif command -v sysctl &>/dev/null; then
         cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 1)
     elif command -v nproc &>/dev/null; then
-        cores=$(nproc)
+        cores=$(nproc || echo 1)
     fi
     
     CPU_CORES=$cores

@@ -124,9 +124,11 @@ detect_dependencies() {
     log_step "检测依赖环境..."
     
     # Node.js
+    # Node.js
     if command_exists node; then
         HAS_NODE=true
-        NODE_VERSION=$(node --version 2>/dev/null | sed 's/^v//')
+        # 使用更稳健的方式获取版本，只提取数字
+        NODE_VERSION=$(node --version 2>/dev/null | sed 's/^v//' | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
         log_debug "Node.js: $NODE_VERSION"
     fi
     

@@ -595,6 +595,9 @@ WantedBy=multi-user.target
 run_installation() {
     local mode="${1:-$INSTALL_MODE}"
     
+    # 再次检测环境，防状态变化或首次检测不准
+    detect_dependencies
+    
     save_progress "installation_started"
     
     # 1. 检查 Node.js

@@ -35,22 +35,51 @@ CONFIG_HEARTBEAT_INTERVAL="30m"
 CONFIG_CACHE_TTL=3600
 
 # ============================================================================
-# 步骤 1: AI Provider 配置
+# 主入口: 运行配置向导
 # ============================================================================
 
-wizard_step_providers() {
-    ui_step_title 1 6 "配置 AI Provider"
+run_config_wizard() {
+    ui_clear
+    ui_show_banner "$DEPLOY_VERSION"
     
-    ui_beginner_tip "AI Provider 是提供 AI 服务的公司，如 OpenAI、Anthropic 等。
-你需要在这些公司的网站上注册账号并获取 API Key。
-API Key 是访问 AI 服务的密钥，请妥善保管。"
+    # 检查 CLI 是否已安装
+    local cli_name="openclaw"
+    [[ "$INSTALL_VERSION" == "chinese" ]] && cli_name="openclaw-cn"
     
-    local providers=(
-        "Anthropic (Claude) - 推荐，性能优秀"
-        "OpenAI (GPT) - 广泛使用"
-        "DeepSeek - 性价比高，支持中文"
-        "Google (Gemini) - 免费额度"
-        "本地模型 (Ollama) - 完全免费，需要本地运行"
+    if ! command_exists "$cli_name"; then
+        if ui_confirm "未检测到 OpenClaw CLI，是否先安装?" "y"; then
+            install_openclaw_cli
+        else
+            return 1
+        fi
+    fi
+    
+    # 提示用户
+    ui_panel "配置向导即将开始" \
+        "OpenClaw 提供了强大的原生配置工具 (onboard)。" \
+        "即将启动该工具为您完成核心配置。" \
+        "配置完成后，此脚本将自动优化系统权限和服务。"
+        
+    ui_wait_key "按任意键开始配置..."
+    
+    # 运行原生 onboard
+    echo "启动配置工具..."
+    if ! $cli_name onboard; then
+        log_error "配置过程中断或失败"
+        return 1
+    fi
+    
+    # 配置后增强
+    echo ""
+    ui_section_title "系统环境优化" "$EMOJI_GEAR"
+    
+    # 1. 权限修正
+    ui_log_step "修正配置文件权限..."
+    # 查找可能的配置文件位置
+    local config_locations=(
+        "$HOME/.openclaw/openclaw.json"
+        "$HOME/.config/openclaw/openclaw.json"
+        "./openclaw.json"
     )
     
     echo -e "  选择要配置的 AI Provider ${S_DIM}(可多选)${C_RESET}"

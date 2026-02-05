@@ -39,6 +39,7 @@ fi
 # 如果库文件不存在，需要下载
 if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     echo "正在下载脚本..."
+    echo "临时目录: $SCRIPT_DIR"
     
     # 下载库文件
     BASE_URL="https://raw.githubusercontent.com/KnowHunters/openclaw-deploy/main"
@@ -46,9 +47,18 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
     
     download_failed=false
     for lib in ui utils detector installer wizard software skills health updater; do
-        echo "  下载 ${lib}.sh..."
-        if ! curl -fsSL "$BASE_URL/lib/${lib}.sh" -o "$SCRIPT_DIR/lib/${lib}.sh"; then
-            echo "错误: 下载 ${lib}.sh 失败"
+        echo -n "  下载 ${lib}.sh... "
+        if curl -fsSL "$BASE_URL/lib/${lib}.sh" -o "$SCRIPT_DIR/lib/${lib}.sh" 2>/dev/null; then
+            # 验证文件是否真的下载成功
+            if [[ -f "$SCRIPT_DIR/lib/${lib}.sh" ]] && [[ -s "$SCRIPT_DIR/lib/${lib}.sh" ]]; then
+                echo "✓"
+            else
+                echo "✗ (文件为空)"
+                download_failed=true
+                break
+            fi
+        else
+            echo "✗ (下载失败)"
             download_failed=true
             break
         fi
@@ -64,6 +74,7 @@ if [[ ! -f "$SCRIPT_DIR/lib/ui.sh" ]]; then
         exit 1
     fi
     
+    echo ""
     echo "下载完成！"
     echo ""
 fi

@@ -324,9 +324,14 @@ install_nodejs_linux() {
         
         # 4. 安装
         log_info "执行安装..."
-        # 尝试先移除旧版本 (可选，防止冲突)
-        # sudo apt-get remove -y nodejs libnode* >> "$LOG_FILE" 2>&1 || true
         
+        # 强制卸载旧版本 (解决 0 upgraded 问题)
+        # 许多发行版(如 Kali/Ubuntu)自带旧版 nodejs，不卸载可能导致 conflicts 或不更新
+        log_info "正在清理旧版本 Node.js (这可能需要一点时间)..."
+        sudo apt-get remove -y nodejs npm libnode* >> "$LOG_FILE" 2>&1 || true
+        sudo apt-get autoremove -y >> "$LOG_FILE" 2>&1 || true
+        
+        log_info "安装新版本 Node.js..."
         sudo apt-get install -y nodejs >> "$LOG_FILE" 2>&1
         
     elif command_exists dnf; then

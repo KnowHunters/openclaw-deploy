@@ -357,7 +357,16 @@ install_nodejs_linux() {
         return 1
     fi
     
+    # 刷新命令缓存，确保能找到新安装的 node
+    hash -r 2>/dev/null || true
+    
+    # 强制重置变量
+    HAS_NODE=true
+    NODE_VERSION=$(node --version 2>/dev/null | sed 's/^v//')
+    
     # 验证安装
+    log_info "验证安装: found node at $(command -v node), version: $NODE_VERSION"
+    
     if command_exists node && check_node_version $MIN_NODE_VERSION; then
         ui_spinner_success "Node.js $(node --version) 安装成功"
         return 0

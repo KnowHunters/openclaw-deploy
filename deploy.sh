@@ -98,6 +98,9 @@ source "$SCRIPT_DIR/lib/skills.sh"
 source "$SCRIPT_DIR/lib/health.sh"
 source "$SCRIPT_DIR/lib/updater.sh"
 
+# 显示版本信息，确认脚本已更新
+log_info "OpenClaw Deploy v$DEPLOY_VERSION (Build: $(date +%Y-%m-%d))"
+
 # ============================================================================
 # 主菜单
 # ============================================================================

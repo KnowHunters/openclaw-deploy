@@ -21,6 +21,9 @@
 
 set -e
 
+# 版本标识（用于调试）
+echo "[DEBUG] Script version: 2024-02-05-v3"
+
 # ============================================================================
 # 初始化
 # ============================================================================
@@ -30,10 +33,12 @@ if [[ -p /dev/stdin ]] || [[ ! -t 0 ]]; then
     # 通过管道执行，创建临时目录
     SCRIPT_DIR=$(mktemp -d)
     IS_PIPED=true
+    echo "[DEBUG] Pipe execution detected, SCRIPT_DIR=$SCRIPT_DIR"
 else
     # 本地执行
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
     IS_PIPED=false
+    echo "[DEBUG] Local execution detected, SCRIPT_DIR=$SCRIPT_DIR"
 fi
 
 # 如果库文件不存在，需要下载

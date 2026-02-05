@@ -110,7 +110,19 @@ run_config_wizard() {
             install_systemd_service
         fi
     else
-        log_info "系统不支持 Systemd，跳过服务注册"
+        local os_type=$(detect_os)
+        if [[ "$os_type" == "wsl" ]]; then
+            log_warning "检测到 WSL 环境，但 Systemd 未启用"
+            ui_tip "在 WSL 中启用 Systemd 的方法:
+1. 编辑配置文件: sudo nano /etc/wsl.conf
+2. 添加以下内容:
+   [boot]
+   systemd=true
+3. 在 Windows CMD 中重启 WSL: wsl --shutdown
+4. 重新进入 WSL 即可生效"
+        else
+            log_info "系统不支持 Systemd，跳过服务注册"
+        fi
     fi
     
     # 3. 初始化工作区 (人格与记忆)
@@ -128,8 +140,11 @@ run_config_wizard() {
             " " \
             "查看日志: journalctl -u openclaw -f"
     else
+        local start_tip="由于系统不支持 Systemd (或未启用)，请手动启动："
+        [[ "$(detect_os)" == "wsl" ]] && start_tip="WSL 未启用 Systemd，建议手动启动："
+        
         ui_panel "配置全部完成!" \
-            "由于系统不支持 Systemd，请手动启动服务：" \
+            "$start_tip" \
             "${C_GREEN}nohup openclaw gateway > openclaw.log 2>&1 &${C_RESET}" \
             " " \
             "或者前台运行: ${C_GREEN}openclaw start${C_RESET}"

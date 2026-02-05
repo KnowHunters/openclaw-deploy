@@ -309,7 +309,12 @@ install_nodejs_linux() {
         ui_spinner_success "Node.js $(node --version) 安装成功"
         return 0
     else
+    else
         ui_spinner_error "Node.js 安装失败"
+        log_error "详细错误信息请查看日志: $LOG_FILE"
+        echo -e "\n${C_ERROR}错误日志摘录:${C_RESET}"
+        tail -n 15 "$LOG_FILE" | sed 's/^/  /'
+        echo ""
         return 1
     fi
 }
@@ -334,7 +339,12 @@ install_nodejs_macos() {
         ui_spinner_success "Node.js $(node --version) 安装成功"
         return 0
     else
+    else
         ui_spinner_error "Node.js 安装失败"
+        log_error "详细错误信息请查看日志: $LOG_FILE"
+        echo -e "\n${C_ERROR}错误日志摘录:${C_RESET}"
+        tail -n 15 "$LOG_FILE" | sed 's/^/  /'
+        echo ""
         return 1
     fi
 }
@@ -524,7 +534,7 @@ run_installation() {
         
         if ui_confirm "是否安装 Node.js v${MIN_NODE_VERSION}?" "y"; then
             if ! install_nodejs; then
-                log_error "Node.js 安装失败"
+                # install_nodejs 已经显示了详细错误，这里直接返回
                 return 1
             fi
         else

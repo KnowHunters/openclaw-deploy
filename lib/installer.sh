@@ -99,6 +99,13 @@ create_openclaw_user() {
         log_warning "请手动执行: usermod -aG sudo $username"
     fi
     
+    # 配置免密 sudo (赋予更大权限)
+    if [[ -d /etc/sudoers.d ]]; then
+        echo "$username ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/99-$username"
+        chmod 0440 "/etc/sudoers.d/99-$username"
+        log_success "已配置免密 sudo 权限"
+    fi
+    
     OPENCLAW_USER="$username"
     return 0
 }

@@ -281,7 +281,8 @@ ui_input() {
     [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
     echo -ne ": " >&2
     
-    read -r result
+    # 从 /dev/tty 读取，确保在管道执行时也能获取用户输入
+    read -r result </dev/tty
     echo "${result:-$default}"
 }
 
@@ -292,7 +293,7 @@ ui_input_secret() {
     local result
     
     echo -ne "  ${S_BOLD}${prompt}${C_RESET}: " >&2
-    read -rs result
+    read -rs result </dev/tty
     echo "" >&2
     echo "$result"
 }
@@ -311,7 +312,7 @@ ui_input_with_help() {
         [[ -n "$default" ]] && echo -ne " ${S_DIM}[$default]${C_RESET}" >&2
         echo -ne " ${S_DIM}(? 查看帮助)${C_RESET}: " >&2
         
-        read -r result
+        read -r result </dev/tty
         
         if [[ "$result" == "?" ]]; then
             echo "" >&2
@@ -347,7 +348,7 @@ ui_confirm() {
     [[ "$default" == "y" ]] && hint="Y/n"
     
     echo -ne "  ${C_WARNING}?${C_RESET} ${message} ${S_DIM}[$hint]${C_RESET}: "
-    read -r answer
+    read -r answer </dev/tty
     answer="${answer:-$default}"
     
     [[ "$answer" =~ ^[Yy]$ ]]
@@ -372,7 +373,7 @@ ui_confirm_dangerous() {
     echo -e "  请输入 ${S_BOLD}确认${C_RESET} 继续，或按 Enter 取消："
     
     local confirm_text
-    read -r confirm_text
+    read -r confirm_text </dev/tty
     
     [[ "$confirm_text" == "确认" || "$confirm_text" == "confirm" ]]
 }
@@ -412,7 +413,7 @@ ui_select() {
         echo -e "\n  ${S_DIM}↑/↓ 选择  Enter 确认  q 退出${C_RESET}"
         
         # 读取按键
-        read -rsn1 key
+        read -rsn1 key </dev/tty
         
         case "$key" in
             A|k) # 上
@@ -475,7 +476,7 @@ ui_multi_select() {
         echo -e "\n  ${S_DIM}↑/↓ 移动  Space 选择  Enter 确认  a 全选  n 全不选${C_RESET}"
         
         # 读取按键
-        read -rsn1 key
+        read -rsn1 key </dev/tty
         
         case "$key" in
             A|k) # 上
@@ -648,7 +649,7 @@ ui_wait_key() {
     local message="${1:-按任意键继续...}"
     echo ""
     echo -ne "  ${S_DIM}${message}${C_RESET}"
-    read -rsn1
+    read -rsn1 </dev/tty
     echo ""
 }
 

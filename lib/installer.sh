@@ -294,12 +294,12 @@ install_nodejs_linux() {
         # 2. 下载并运行 setup 脚本
         local setup_script="/tmp/nodesource_setup.sh"
         if curl -fsSL "https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x" -o "$setup_script"; then
-             # 打印 OS 信息帮助调试
+             # 打印 OS 信息帮助调试 (仅日志)
              echo "OS Release Info:" >> "$LOG_FILE"
              cat /etc/os-release >> "$LOG_FILE" 2>&1 || true
              
              # 执行 setup 脚本
-             log_info "运行 setup 脚本..."
+             log_info "配置 NodeSource 源..."
              sudo bash "$setup_script" >> "$LOG_FILE" 2>&1
         else
              log_error "下载 Node.js setup 脚本失败"
@@ -325,16 +325,16 @@ install_nodejs_linux() {
         log_info "更新软件包索引..."
         sudo apt-get update >> "$LOG_FILE" 2>&1
         
-        log_info "检查 Node.js 版本策略:"
-        # 这里的输出同时显示在屏幕和日志中
-        apt-cache policy nodejs | tee -a "$LOG_FILE" | sed 's/^/    /'
+        # 记录策略到日志，但不显示在屏幕
+        echo "Checking Node.js policy:" >> "$LOG_FILE"
+        apt-cache policy nodejs >> "$LOG_FILE" 2>&1
         
         # 4. 安装
         log_info "执行安装..."
         
         # 强制卸载旧版本 (解决 0 upgraded 问题)
         # 许多发行版(如 Kali/Ubuntu)自带旧版 nodejs，不卸载可能导致 conflicts 或不更新
-        log_info "正在清理旧版本 Node.js (这可能需要一点时间)..."
+        # log_info "正在清理旧版本 Node.js..."
         sudo apt-get remove -y nodejs npm libnode* >> "$LOG_FILE" 2>&1 || true
         sudo apt-get autoremove -y >> "$LOG_FILE" 2>&1 || true
         

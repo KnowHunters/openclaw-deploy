@@ -634,6 +634,9 @@ run_installation() {
     
     save_progress "nodejs_ready"
     
+    # 1.5 安装其他必需依赖 (编译工具等)
+    install_required_software
+    
     # 2. 安装 OpenClaw CLI
     if ! install_openclaw_cli; then
         log_error "OpenClaw CLI 安装失败"

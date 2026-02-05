@@ -28,6 +28,8 @@ declare -A SOFTWARE_LIST=(
     ["git"]="Git|版本控制|git --version|git|git|git"
     ["curl"]="curl|网络请求工具|curl --version|curl|curl|curl"
     
+    ["build-essential"]="Build Essential|编译工具链(make/gcc)|make --version|build-essential|make|make"
+    
     # 推荐组件
     ["jq"]="jq|JSON 处理工具|jq --version|jq|jq|jq"
     ["ripgrep"]="ripgrep|快速搜索工具|rg --version|ripgrep|ripgrep|ripgrep"
@@ -51,6 +53,8 @@ declare -A SOFTWARE_CATEGORY_MAP=(
     ["nodejs"]="required"
     ["git"]="required"
     ["curl"]="required"
+    ["build-essential"]="required"
+    ["python3"]="required"
     ["jq"]="recommended"
     ["ripgrep"]="recommended"
     ["fd"]="recommended"
@@ -59,7 +63,6 @@ declare -A SOFTWARE_CATEGORY_MAP=(
     ["ffmpeg"]="media"
     ["imagemagick"]="media"
     ["tesseract"]="media"
-    ["python3"]="dev"
     ["docker"]="dev"
     ["chromium"]="dev"
 )
